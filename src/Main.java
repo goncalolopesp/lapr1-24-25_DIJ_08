@@ -24,13 +24,16 @@ public class Main {
 
             switch (opcao) {
                 case 1:
-                        System.out.print("Digite o caminho do arquivo CSV: ");
-                        String ficheiroCSV = scanner.nextLine();
+                    System.out.print("Indica o caminho do ficheiro CSV: ");
+                    String ficheiroCSV = scanner.nextLine();
 
-                        System.out.print("Digite o valor de k: ");
-                        int k = scanner.nextInt();
+                    System.out.print("Digita a quantidade de valores/vetores prórpios a usar: ");
+                    int k = scanner.nextInt();
 
+                    if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(ficheiroCSV)) {
+                        k = ajustarK(ficheiroCSV, k);
                         decomporMatriz(ficheiroCSV, k);
+                    }
                     break;
 
                 case 2:
@@ -46,70 +49,86 @@ public class Main {
                     break;
 
                 default:
-                    System.out.println("Opção inválida. Tente novamente.");
+                    System.out.println("Não existe essa opção");
             }
         }
 
         scanner.close();
     }
 
-    private static void decomporMatriz(String ficheiroCSV, int k) throws FileNotFoundException {
-        // Obter dimensões e preencher matriz
-        double[][] matriz = preencherMatriz(ficheiroCSV);
-        mostrarMatriz(matriz);
+    private static boolean validarCaminhoFicheiro(String ficheiroCSV) {
+        File file = new File(ficheiroCSV);
+        if (!file.exists()) {
+            System.out.println("O caminho indicado não existe");
+            return false;
+        }
+        return true;
+    }
 
-        // Decomposição de valores e vetores próprios usando Apache Commons
+    private static boolean validarMatriz(String ficheiroCSV) throws FileNotFoundException {
+        double[][] matriz = preencherMatriz(ficheiroCSV);
+        if (matriz.length != matriz[0].length) {
+            System.out.println("A matriz indicada não é quadrada");
+            return false;
+        }
+
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                if (matriz[i][j] != matriz[j][i]) {
+                    System.out.println("A matriz indicada não é simétrica");
+                    return false;
+                }
+            }
+        }
+        if (matriz.length >= 256){
+            System.out.println("O programa não possui capacidade para analisar a matriz fornecida");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static int ajustarK(String ficheiroCSV, int k) throws FileNotFoundException {
+        double[][] matriz = preencherMatriz(ficheiroCSV);
+        if (k == -1 || k > matriz.length) {
+            System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
+            k = matriz.length;
+        }
+        return k;
+    }
+
+    private static void decomporMatriz(String ficheiroCSV, int k) throws FileNotFoundException {
+        double[][] matriz = preencherMatriz(ficheiroCSV);
+
         EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
 
-        // Obter autovalores
         double[] valoresProprios = decomposicao.getRealEigenvalues();
 
-        // Obter vetores próprios e organizar na mesma ordem dos autovalores
         double[][] vetoresProprios = new double[matriz.length][];
         for (int i = 0; i < matriz.length; i++) {
             vetoresProprios[i] = decomposicao.getEigenvector(i).toArray();
         }
 
-        // Ordenar autovalores em ordem decrescente e reordenar vetores próprios
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
-
-        // Transpor para garantir vetores próprios como colunas
         vetoresProprios = transporMatriz(vetoresProprios);
-
-        // Normalizar vetores próprios
         vetoresProprios = normalizarColunas(vetoresProprios);
-
-        // Ordenar vetores próprios
         double[][] vetoresPropriosOrdenados = ordenarVetoresProprios(vetoresProprios, valoresProprios, valoresPropriosOrdenados);
-
-        // Usar vetores próprios reordenados e normalizados
         vetoresProprios = vetoresPropriosOrdenados;
 
-        // Calcular matrizes Pk e Dk
         double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
         double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresPropriosOrdenados, 0, k));
-
-        System.out.println("\nPk");
-        mostrarMatriz(Pk);
-        System.out.println("\nDk");
-        mostrarMatriz(Dk);
-        System.out.println("\nPk^T");
-        mostrarMatriz(transporMatriz(Pk));
-
-        // Calcular Ak = Pk * Dk * Pk^T
-        System.out.println("\nAk:");
+        
+        System.out.println("Matriz reconstruída");
         double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
         mostrarMatriz(Ak);
 
-        // Calcular erro absoluto médio
         double erro = calcularEAM(matriz, Ak);
-        System.out.println("\nErro Absoluto Médio");
+        System.out.println("Erro Absoluto Médio");
         System.out.printf("%.2f %n", erro);
     }
 
     private static double calcularEAM(double[][] matriz, double[][] Ak) {
         double erro = (double) 1 / (matriz.length * matriz[0].length);
-
         double soma = 0;
 
         for (int i = 0; i < matriz.length; i++) {
@@ -119,7 +138,6 @@ public class Main {
         }
 
         erro *= soma;
-
         return erro;
     }
 
@@ -130,7 +148,7 @@ public class Main {
                 norma += Math.pow(matriz[j][i], 2);
             }
             norma = Math.sqrt(norma);
-            if (norma != 0) { // Evita divisão por zero
+            if (norma != 0) {
                 for (int j = 0; j < matriz.length; j++) {
                     matriz[j][i] /= norma;
                 }
