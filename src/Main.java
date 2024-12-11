@@ -52,7 +52,7 @@ public class Main {
         vetoresProprios = vetoresPropriosOrdenados;
 
         // Calcular matrizes Pk e Dk
-        int k = 6; // assumir que k é o tamanho da matriz
+        int k = 8; // assumir que k é o tamanho da matriz
 
         double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
         double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresPropriosOrdenados, 0, k));
