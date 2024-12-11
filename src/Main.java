@@ -8,8 +8,52 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
-        String ficheiroCSV = "exampleInputFunc1.csv";
+        Scanner scanner = new Scanner(System.in);
+        boolean ativo = true;
 
+        while (ativo) {
+            System.out.println("Menu:");
+            System.out.println("1. Decompor Matriz");
+            System.out.println("2. Reconstruir Imagens");
+            System.out.println("3. Obter Imagem Semelhante");
+            System.out.println("4. Sair");
+            System.out.print("Escolha uma opção: ");
+
+            int opcao = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (opcao) {
+                case 1:
+                        System.out.print("Digite o caminho do arquivo CSV: ");
+                        String ficheiroCSV = scanner.nextLine();
+
+                        System.out.print("Digite o valor de k: ");
+                        int k = scanner.nextInt();
+
+                        decomporMatriz(ficheiroCSV, k);
+                    break;
+
+                case 2:
+                    System.out.println("Ainda não funciona");
+                    break;
+
+                case 3:
+                    System.out.println("Ainda não funciona");
+                    break;
+
+                case 4:
+                    ativo = false;
+                    break;
+
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static void decomporMatriz(String ficheiroCSV, int k) throws FileNotFoundException {
         // Obter dimensões e preencher matriz
         double[][] matriz = preencherMatriz(ficheiroCSV);
         mostrarMatriz(matriz);
@@ -35,15 +79,13 @@ public class Main {
         // Normalizar vetores próprios
         vetoresProprios = normalizarColunas(vetoresProprios);
 
-        // Ordenar vetores proprios
+        // Ordenar vetores próprios
         double[][] vetoresPropriosOrdenados = ordenarVetoresProprios(vetoresProprios, valoresProprios, valoresPropriosOrdenados);
 
         // Usar vetores próprios reordenados e normalizados
         vetoresProprios = vetoresPropriosOrdenados;
 
         // Calcular matrizes Pk e Dk
-        int k = 8; // assumir que k é o tamanho da matriz
-
         double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
         double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresPropriosOrdenados, 0, k));
 
@@ -59,28 +101,10 @@ public class Main {
         double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
         mostrarMatriz(Ak);
 
-        // Calcular erro absoluto medio
+        // Calcular erro absoluto médio
         double erro = calcularEAM(matriz, Ak);
-        System.out.println("\nErro Absoluto Medio");
+        System.out.println("\nErro Absoluto Médio");
         System.out.printf("%.2f %n", erro);
-    }
-
-    private static double[][] ordenarVetoresProprios(double[][] vetoresProprios, double[] valoresProprios, double[] valoresPropriosOrdenados) {
-        double[][] vetoresPropriosOrdenados = new double[vetoresProprios.length][vetoresProprios[0].length];
-
-        for (int i = 0; i < valoresPropriosOrdenados.length; i++) {
-            boolean flag = true;
-            for (int j = 0; j < valoresProprios.length && flag; j++) {
-                if (valoresPropriosOrdenados[i] == valoresProprios[j]) {
-                    for (int k = 0; k < vetoresProprios.length; k++) {
-                        vetoresPropriosOrdenados[k][i] = vetoresProprios[k][j];
-                    }
-                    flag = false;
-                }
-            }
-        }
-
-        return vetoresPropriosOrdenados;
     }
 
     private static double calcularEAM(double[][] matriz, double[][] Ak) {
@@ -182,6 +206,24 @@ public class Main {
             }
         }
         return ordenado;
+    }
+
+    private static double[][] ordenarVetoresProprios(double[][] vetoresProprios, double[] valoresProprios, double[] valoresPropriosOrdenados) {
+        double[][] vetoresPropriosOrdenados = new double[vetoresProprios.length][vetoresProprios[0].length];
+
+        for (int i = 0; i < valoresPropriosOrdenados.length; i++) {
+            boolean flag = true;
+            for (int j = 0; j < valoresProprios.length && flag; j++) {
+                if (valoresPropriosOrdenados[i] == valoresProprios[j]) {
+                    for (int k = 0; k < vetoresProprios.length; k++) {
+                        vetoresPropriosOrdenados[k][i] = vetoresProprios[k][j];
+                    }
+                    flag = false;
+                }
+            }
+        }
+
+        return vetoresPropriosOrdenados;
     }
 
     public static double[][] preencherMatriz(String ficheiroCSV) throws FileNotFoundException {
