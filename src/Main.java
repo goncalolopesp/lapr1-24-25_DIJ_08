@@ -90,7 +90,7 @@ public class Main {
 
     private static int ajustarK(String ficheiroCSV, int k) throws FileNotFoundException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
-        if (k == -1 || k > matriz.length) {
+        if (k <= 0 || k > matriz.length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
             k = matriz.length;
         }
