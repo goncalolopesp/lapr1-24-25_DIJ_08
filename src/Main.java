@@ -1,5 +1,6 @@
-import org.la4j.Matrix;
-import org.la4j.decomposition.EigenDecompositor;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,83 +10,174 @@ public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         String ficheiroCSV = "exampleInputFunc1.csv";
 
-        int[] dimensoesMatriz = calcularDimensoesCSV(ficheiroCSV); // Obter numero de linhas e colunas
+        // Obter dimensões e preencher matriz
+        double[][] matriz = preencherMatriz(ficheiroCSV);
+        mostrarMatriz(matriz);
 
-        double[][] matriz = new double[dimensoesMatriz[0]][dimensoesMatriz[1]];
-        preencherMatriz(matriz, ficheiroCSV); // Preencher a matriz 2D com os valores do CSV
-        mostrarMatriz(matriz); // Imprimir a matriz 2D
+        // Decomposição de valores e vetores próprios usando Apache Commons
+        EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
 
-        //Guardar os valores e os vetores próprios
-        int k = 3;
-        EigenDecompositor decompositor = new EigenDecompositor(Matrix.from2DArray(matriz));
-        Matrix[] decomposed = decompositor.decompose();
+        // Obter autovalores
+        double[] valoresProprios = decomposicao.getRealEigenvalues();
 
-        Matrix eigenVectors = decomposed[0];
-        Matrix eigenValues = decomposed[1];
+        // Obter vetores próprios e organizar na mesma ordem dos autovalores
+        double[][] vetoresProprios = new double[matriz.length][];
+        for (int i = 0; i < matriz.length; i++) {
+            vetoresProprios[i] = decomposicao.getEigenvector(i).toArray();
+        }
 
-        //Calcular as matrizes Pk e Dk
-        for (int i = 0; i < eigenVectors.columns(); i++) {
-            double norm = 0;
-            for (int j = 0; j < eigenVectors.rows(); j++) {
-                norm += Math.pow(eigenVectors.get(j, i), 2);
-            }
-            norm = Math.sqrt(norm);
-            for (int j = 0; j < eigenVectors.rows(); j++) {
-                eigenVectors.set(j, i, eigenVectors.get(j, i) / norm);
+        // Ordenar autovalores em ordem decrescente e reordenar vetores próprios
+        double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
+
+        // Transpor para garantir vetores próprios como colunas
+        vetoresProprios = transporMatriz(vetoresProprios);
+
+        // Normalizar vetores próprios
+        vetoresProprios = normalizarColunas(vetoresProprios);
+
+        double[][] vetoresPropriosOrdenados = new double[vetoresProprios.length][vetoresProprios[0].length];
+        for (int i = 0; i < valoresPropriosOrdenados.length; i++) {
+            boolean flag = true;
+            for (int j = 0; j < valoresProprios.length && flag; j++) {
+                if (valoresPropriosOrdenados[i] == valoresProprios[j]) {
+                    for (int k = 0; k < vetoresProprios.length; k++) {
+                        vetoresPropriosOrdenados[k][i] = vetoresProprios[k][j];
+                    }
+                    flag = false;
+                }
             }
         }
 
-        Matrix Pk = eigenVectors.slice(0, 0, matriz.length, k);
-        Matrix Dk = eigenValues.slice(0, 0, k, k);
+        // Usar vetores próprios reordenados e normalizados
+        vetoresProprios = vetoresPropriosOrdenados;
 
-        //Fazer a transposta
-        System.out.println();
-        fazerTransposta(matriz);
+        // Calcular matrizes Pk e Dk
+        int k = 6; // assumir que k é o tamanho da matriz
 
-        //Ordenar matriz diagonal dos valores prórios
-        System.out.println();
-        double[] listaValoresProprios = new double[matriz.length];
-        double[][] matrizValoresPropriosOrdenada = new double[matriz.length][matriz.length];
-        construirMatrizValores(eigenValues, listaValoresProprios);
-        ordenarMatrizValores(listaValoresProprios);
-        construirMatrizDiagonalOrdenada(listaValoresProprios, matrizValoresPropriosOrdenada);
-    }
+        double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
+        double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresPropriosOrdenados, 0, k));
 
-    private static void mostrarMatriz(double[][] matriz) {
-        for (int numLinha = 0; numLinha < matriz.length; numLinha++) {
-            for (int numColuna = 0; numColuna < matriz[numLinha].length; numColuna++) {
-                System.out.print(matriz[numLinha][numColuna] + " ");
+        System.out.println("\nPk");
+        mostrarMatriz(Pk);
+        System.out.println("\nDk");
+        mostrarMatriz(Dk);
+        System.out.println("\nPk^T");
+        mostrarMatriz(transporMatriz(Pk));
+
+        // Calcular Ak = Pk * Dk * Pk^T
+        System.out.println("\nAk:");
+        double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
+        mostrarMatriz(Ak);
+
+        float erro = (float) 1 / (matriz.length * matriz[0].length);
+
+        float soma = 0;
+
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[i].length; j++) {
+                soma += (float) Math.abs(matriz[i][j] - Ak[i][j]);
             }
-            System.out.println();
         }
+
+        System.out.println("\nErro Absoluto Medio");
+
+        erro *= soma;
+
+        System.out.printf("%.2f %n", erro);
     }
 
-    private static void preencherMatriz(double[][] matriz, String ficheiroCSV) throws FileNotFoundException {
+    private static double[][] normalizarColunas(double[][] matriz) {
+        for (int i = 0; i < matriz[0].length; i++) {
+            double norma = 0;
+            for (int j = 0; j < matriz.length; j++) {
+                norma += Math.pow(matriz[j][i], 2);
+            }
+            norma = Math.sqrt(norma);
+            if (norma != 0) { // Evita divisão por zero
+                for (int j = 0; j < matriz.length; j++) {
+                    matriz[j][i] /= norma;
+                }
+            }
+        }
+        return matriz;
+    }
+
+    private static double[][] fatiarMatriz(double[][] matriz, int linhaInicio, int linhaFim, int colunaInicio, int colunaFim) {
+        double[][] resultado = new double[linhaFim - linhaInicio][colunaFim - colunaInicio];
+        for (int i = linhaInicio; i < linhaFim; i++) {
+            for (int j = colunaInicio; j < colunaFim; j++) {
+                resultado[i - linhaInicio][j - colunaInicio] = matriz[i][j];
+            }
+        }
+        return resultado;
+    }
+
+    private static double[] fatiarArray(double[] array, int inicio, int fim) {
+        double[] resultado = new double[fim - inicio];
+        for (int i = inicio; i < fim; i++) {
+            resultado[i - inicio] = array[i];
+        }
+        return resultado;
+    }
+
+    private static double[][] criarMatrizDiagonal(double[] valores) {
+        double[][] matrizDiagonal = new double[valores.length][valores.length];
+        for (int i = 0; i < valores.length; i++) {
+            matrizDiagonal[i][i] = valores[i];
+        }
+        return matrizDiagonal;
+    }
+
+    private static double[][] transporMatriz(double[][] matriz) {
+        double[][] transposta = new double[matriz[0].length][matriz.length];
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                transposta[j][i] = matriz[i][j];
+            }
+        }
+        return transposta;
+    }
+
+    private static double[][] multiplicarMatrizes(double[][] a, double[][] b) {
+        if (a[0].length != b.length) {
+            throw new IllegalArgumentException("Dimensões das matrizes não são compatíveis para multiplicação.");
+        }
+
+        double[][] resultado = new double[a.length][b[0].length];
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < b[0].length; j++) {
+                for (int k = 0; k < b.length; k++) {
+                    resultado[i][j] += a[i][k] * b[k][j];
+                }
+            }
+        }
+        return resultado;
+    }
+
+    private static double[] ordenarArray(double[] array, double[][] matriz) {
+        double[] ordenado = array.clone();
+        for (int i = 0; i < ordenado.length; i++) {
+            for (int j = i + 1; j < ordenado.length; j++) {
+                if (ordenado[j] > ordenado[i]) {
+                    double[] matrizAux = matriz[i];
+                    matriz[i] = matriz[j];
+                    matriz[j] = matrizAux;
+                    double temp = ordenado[i];
+                    ordenado[i] = ordenado[j];
+                    ordenado[j] = temp;
+                }
+            }
+        }
+        return ordenado;
+    }
+
+    public static double[][] preencherMatriz(String ficheiroCSV) throws FileNotFoundException {
         File csv = new File(ficheiroCSV);
         Scanner sc = new Scanner(csv);
 
-        int numLinha = 0;
+        int numLinhas = 0;
+        int numColunas = 0;
 
-        // Preencher a matriz com os dados do CSV
-        while (sc.hasNextLine()) {
-            String line = sc.nextLine();
-            String[] valores = line.split(",");
-            for (int numColuna = 0; numColuna < valores.length; numColuna++) {
-                matriz[numLinha][numColuna] = Double.parseDouble(valores[numColuna]); // Preenche a célula da matriz
-            }
-            numLinha++;
-        }
-
-        sc.close();
-    }
-
-    private static int[] calcularDimensoesCSV(String ficheiroCSV) throws FileNotFoundException {
-        File csv = new File(ficheiroCSV);
-        Scanner sc = new Scanner(csv);
-
-        int numLinhas = 0, numColunas = 0;
-
-        // Contar as linhas e determinar o número de colunas
         while (sc.hasNextLine()) {
             String linha = sc.nextLine();
             numLinhas++;
@@ -95,66 +187,32 @@ public class Main {
 
         sc.close();
 
-        // Retorna um array com o número de linhas e o número de colunas
-        return new int[]{numLinhas, numColunas};
+        double[][] matriz = new double[numLinhas][numColunas];
+        sc = new Scanner(csv);
+        int numLinha = 0;
+
+        while (sc.hasNextLine()) {
+            String linha = sc.nextLine();
+            String[] valores = linha.split(",");
+            for (int numColuna = 0; numColuna < valores.length; numColuna++) {
+                matriz[numLinha][numColuna] = Double.parseDouble(valores[numColuna]);
+            }
+            numLinha++;
+        }
+        sc.close();
+        return matriz;
     }
 
-    //transposta
-    public static void fazerTransposta(double[][] matrizOriginal) {
-        double[][] matrizTransposta = new double[matrizOriginal[0].length][matrizOriginal.length];
-        for (int i = 0; i < matrizTransposta.length; i++) {
-            for (int j = 0; j < matrizTransposta[0].length; j++) {
-                matrizTransposta[i][j] = matrizOriginal[j][i];
-            }
-        }
-        for (int m = 0; m < matrizTransposta.length; m++) {              //nao sei se sera necessario este print(?)
-            for (int n = 0; n < matrizTransposta[0].length; n++) {
-                System.out.printf("%.2f ", matrizTransposta[m][n]);
+    public static void mostrarMatriz(double[][] matriz) {
+        for (double[] linha : matriz) {
+            for (double valor : linha) {
+                System.out.printf("%.2f ", valor);
             }
             System.out.println();
         }
     }
 
-    //ordenar matriz diagonal com os valores proprios
-    public static void construirMatrizValores(Matrix matrizDosValoresProprios, double[] matrizValores) {
-        int posicao = 0;
-        for (int i = 0; i < matrizDosValoresProprios.rows(); i++) {
-            for (int j = 0; j < matrizDosValoresProprios.columns(); j++) {
-                if (i == j) {
-                    matrizValores[posicao] = matrizDosValoresProprios.get(i, j);
-                    posicao++;
-                }
-            }
-        }
-    }
-
-    public static void ordenarMatrizValores(double[] matrizValores) {
-        for (int i = 0; i < matrizValores.length - 1; i++) {
-            for (int m = i + 1; m < matrizValores.length; m++) {
-                if (matrizValores[m] > matrizValores[i]) {
-                    double aux = matrizValores[m];
-                    matrizValores[m] = matrizValores[i];
-                    matrizValores[i] = aux;
-                }
-            }
-        }
-    }
-
-    public static void construirMatrizDiagonalOrdenada(double[] listaValores, double[][] matrizDiagonalOrdenada) {
-        int posicao = 0;
-        for (int i = 0; i < matrizDiagonalOrdenada.length; i++) {
-            for (int j = 0; j < matrizDiagonalOrdenada.length; j++) {
-                if (i == j) {
-                    matrizDiagonalOrdenada[i][j] = listaValores[posicao];
-                    posicao++;
-                }
-            }
-        }
-        for (int m = 0; m < matrizDiagonalOrdenada.length; m++) {           //nao sei se será necessario este print(?)
-            for (int n = 0; n < matrizDiagonalOrdenada.length; n++) {
-                System.out.printf("%.2f ", matrizDiagonalOrdenada[m][n]);
-            }
-            System.out.println();
-        }
+    public static RealMatrix toRealMatrix(double[][] matriz) {
+        return MatrixUtils.createRealMatrix(matriz);
     }
 }
