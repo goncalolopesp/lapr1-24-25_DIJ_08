@@ -35,18 +35,8 @@ public class Main {
         // Normalizar vetores próprios
         vetoresProprios = normalizarColunas(vetoresProprios);
 
-        double[][] vetoresPropriosOrdenados = new double[vetoresProprios.length][vetoresProprios[0].length];
-        for (int i = 0; i < valoresPropriosOrdenados.length; i++) {
-            boolean flag = true;
-            for (int j = 0; j < valoresProprios.length && flag; j++) {
-                if (valoresPropriosOrdenados[i] == valoresProprios[j]) {
-                    for (int k = 0; k < vetoresProprios.length; k++) {
-                        vetoresPropriosOrdenados[k][i] = vetoresProprios[k][j];
-                    }
-                    flag = false;
-                }
-            }
-        }
+        // Ordenar vetores proprios
+        double[][] vetoresPropriosOrdenados = ordenarVetoresProprios(vetoresProprios, valoresProprios, valoresPropriosOrdenados);
 
         // Usar vetores próprios reordenados e normalizados
         vetoresProprios = vetoresPropriosOrdenados;
@@ -69,9 +59,34 @@ public class Main {
         double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
         mostrarMatriz(Ak);
 
-        float erro = (float) 1 / (matriz.length * matriz[0].length);
+        // Calcular erro absoluto medio
+        double erro = calcularEAM(matriz, Ak);
+        System.out.println("\nErro Absoluto Medio");
+        System.out.printf("%.2f %n", erro);
+    }
 
-        float soma = 0;
+    private static double[][] ordenarVetoresProprios(double[][] vetoresProprios, double[] valoresProprios, double[] valoresPropriosOrdenados) {
+        double[][] vetoresPropriosOrdenados = new double[vetoresProprios.length][vetoresProprios[0].length];
+
+        for (int i = 0; i < valoresPropriosOrdenados.length; i++) {
+            boolean flag = true;
+            for (int j = 0; j < valoresProprios.length && flag; j++) {
+                if (valoresPropriosOrdenados[i] == valoresProprios[j]) {
+                    for (int k = 0; k < vetoresProprios.length; k++) {
+                        vetoresPropriosOrdenados[k][i] = vetoresProprios[k][j];
+                    }
+                    flag = false;
+                }
+            }
+        }
+
+        return vetoresPropriosOrdenados;
+    }
+
+    private static double calcularEAM(double[][] matriz, double[][] Ak) {
+        double erro = (double) 1 / (matriz.length * matriz[0].length);
+
+        double soma = 0;
 
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz[i].length; j++) {
@@ -79,11 +94,9 @@ public class Main {
             }
         }
 
-        System.out.println("\nErro Absoluto Medio");
-
         erro *= soma;
 
-        System.out.printf("%.2f %n", erro);
+        return erro;
     }
 
     private static double[][] normalizarColunas(double[][] matriz) {
