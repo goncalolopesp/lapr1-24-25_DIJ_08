@@ -2,12 +2,11 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         boolean ativo = true;
 
@@ -72,6 +71,11 @@ public class Main {
             return false;
         }
 
+        if (matriz.length >= 256) {
+            System.out.println("O programa não possui capacidade para analisar a matriz fornecida");
+            return false;
+        }
+
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz[0].length; j++) {
                 if (matriz[i][j] != matriz[j][i]) {
@@ -79,10 +83,6 @@ public class Main {
                     return false;
                 }
             }
-        }
-        if (matriz.length >= 256){
-            System.out.println("O programa não possui capacidade para analisar a matriz fornecida");
-            return false;
         }
 
         return true;
@@ -97,7 +97,7 @@ public class Main {
         return k;
     }
 
-    private static void decomporMatriz(String ficheiroCSV, int k) throws FileNotFoundException {
+    private static void decomporMatriz(String ficheiroCSV, int k) throws IOException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
 
         EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
@@ -110,21 +110,76 @@ public class Main {
         }
 
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
+        System.out.println();
+        System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n",k);
+
+        System.out.println();
+
         vetoresProprios = transporMatriz(vetoresProprios);
         vetoresProprios = normalizarColunas(vetoresProprios);
         double[][] vetoresPropriosOrdenados = ordenarVetoresProprios(vetoresProprios, valoresProprios, valoresPropriosOrdenados);
+
+        System.out.println("Valores próprios usados:");
+        for (int i = 0; i < k; i++) {
+            System.out.printf("Valor próprio %d: %.2f%n", i + 1, valoresPropriosOrdenados[i]);
+        }
+
+        System.out.println();
+
+        System.out.println("Vetores próprios usados:");
+        for (int i = 0; i < k; i++) {
+            System.out.print("Vetor próprio " + (i + 1) + ": ");
+            for (int j = 0; j < vetoresPropriosOrdenados.length; j++) {
+                System.out.printf("%.2f ", vetoresPropriosOrdenados[j][i]);
+            }
+            System.out.println();
+        }
+
         vetoresProprios = vetoresPropriosOrdenados;
 
         double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
         double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresPropriosOrdenados, 0, k));
-        
+
+        System.out.println();
+
         System.out.println("Matriz reconstruída");
         double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
         mostrarMatriz(Ak);
 
+        System.out.println();
+
         double erro = calcularEAM(matriz, Ak);
         System.out.println("Erro Absoluto Médio");
         System.out.printf("%.2f %n", erro);
+
+        File pasta = new File("Output");
+
+        File ficheiro = new File(ficheiroCSV);
+        String nomeSemCsv = ficheiro.getName().replaceFirst("[.][^.]+$", "");
+
+        String nomeArquivo = "Output/" + nomeSemCsv + "_reconstruida.csv";
+        File arquivoSaida = new File(nomeArquivo);
+
+        if (!arquivoSaida.exists()) {
+            arquivoSaida.createNewFile();
+        }
+        FileWriter writer = new FileWriter(nomeArquivo);
+        PrintWriter printWriter = new PrintWriter(writer);
+
+        for (int i = 0; i < Ak.length; i++) {
+            for (int j = 0; j < Ak[i].length; j++) {
+                printWriter.print(Ak[i][j]);
+                if (j < Ak[i].length - 1) {
+                    printWriter.print(",");
+                }
+            }
+            printWriter.println();
+        }
+        printWriter.close();
+        System.out.println();
+        System.out.println("Matriz reconstruída guardada na pasta 'Output' com o nome '" + nomeArquivo + "'");
+        System.out.println();
+
     }
 
     private static double calcularEAM(double[][] matriz, double[][] Ak) {
@@ -160,18 +215,15 @@ public class Main {
     private static double[][] fatiarMatriz(double[][] matriz, int linhaInicio, int linhaFim, int colunaInicio, int colunaFim) {
         double[][] resultado = new double[linhaFim - linhaInicio][colunaFim - colunaInicio];
         for (int i = linhaInicio; i < linhaFim; i++) {
-            for (int j = colunaInicio; j < colunaFim; j++) {
-                resultado[i - linhaInicio][j - colunaInicio] = matriz[i][j];
-            }
+            if (colunaFim - colunaInicio >= 0)
+                System.arraycopy(matriz[i], colunaInicio, resultado[i - linhaInicio], colunaInicio - colunaInicio, colunaFim - colunaInicio);
         }
         return resultado;
     }
 
     private static double[] fatiarArray(double[] array, int inicio, int fim) {
         double[] resultado = new double[fim - inicio];
-        for (int i = inicio; i < fim; i++) {
-            resultado[i - inicio] = array[i];
-        }
+        if (fim - inicio >= 0) System.arraycopy(array, inicio, resultado, inicio - inicio, fim - inicio);
         return resultado;
     }
 
