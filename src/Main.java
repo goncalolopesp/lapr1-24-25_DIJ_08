@@ -243,15 +243,18 @@ public class Main {
     private static double[][] fatiarMatriz(double[][] matriz, int linhaInicio, int linhaFim, int colunaInicio, int colunaFim) {
         double[][] resultado = new double[linhaFim - linhaInicio][colunaFim - colunaInicio];
         for (int i = linhaInicio; i < linhaFim; i++) {
-            if (colunaFim - colunaInicio >= 0)
-                System.arraycopy(matriz[i], colunaInicio, resultado[i - linhaInicio], colunaInicio - colunaInicio, colunaFim - colunaInicio);
+            for (int j = colunaInicio; j < colunaFim; j++) {
+                resultado[i - linhaInicio][j - colunaInicio] = matriz[i][j];
+            }
         }
         return resultado;
     }
 
     private static double[] fatiarArray(double[] array, int inicio, int fim) {
         double[] resultado = new double[fim - inicio];
-        if (fim - inicio >= 0) System.arraycopy(array, inicio, resultado, inicio - inicio, fim - inicio);
+        for (int i = inicio; i < fim; i++) {
+            resultado[i - inicio] = array[i];
+        }
         return resultado;
     }
 
