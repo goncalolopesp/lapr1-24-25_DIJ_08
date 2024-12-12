@@ -250,6 +250,7 @@ public class Main {
         return resultado;
     }
 
+    //
     private static double[] fatiarArray(double[] array, int inicio, int fim) {
         double[] resultado = new double[fim - inicio];
         for (int i = inicio; i < fim; i++) {
@@ -362,5 +363,18 @@ public class Main {
     //Converte de double para Real Matrix
     public static RealMatrix toRealMatrix(double[][] matriz) {
         return MatrixUtils.createRealMatrix(matriz);
+    }
+
+    //Tranformação de matrizes em vetores
+    public static double[] criacaoDeArrayVetor(double[][] matriz) {
+        int posicao = 0;
+        double[] arrayVetor = new double[(int) Math.pow(matriz.length, 2)];
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz.length; j++) {
+                arrayVetor[posicao] = matriz[i][j];
+                posicao++;
+            }
+        }
+        return arrayVetor;
     }
 }
