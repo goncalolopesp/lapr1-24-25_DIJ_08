@@ -38,7 +38,30 @@ public class Main {
                     break;
 
                 case 2:
-                    System.out.println("Ainda não funciona");
+                    System.out.print("Nome da pasta com os ficheiros csv: ");
+                    String pasta = scanner.nextLine();
+                    File diretorio = new File(pasta);
+                    File[] ficheiros = diretorio.listFiles();
+                    int posicao = 0;
+                    int numDeFicheiros = ficheiros.length;
+                    double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
+                    double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
+                    double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
+                    for (int j = 0; j < matrizNova[0].length; j++) {
+                        for (int i = 0; i < matrizVetor.length; i++) {
+                            matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+                            matrizVetor = criacaoDeArrayVetor(matriz);
+                            matrizNova[i][j] = matrizVetor[posicao];
+                            posicao++;
+                        }
+                        posicao = 0;
+                    }
+                    for (int i = 0; i < matrizNova.length; i++) {
+                        for (int j = 0; j < matrizNova[0].length; j++) {
+                            System.out.printf("%.3f ", matrizNova[i][j]);
+                        }
+                        System.out.println();
+                    }
                     break;
 
                 case 3:
@@ -125,7 +148,7 @@ public class Main {
         //ordena os valores
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
         System.out.println();
-        System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n",k);
+        System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n", k);
 
         System.out.println();
 
@@ -371,8 +394,7 @@ public class Main {
         double[] arrayVetor = new double[(int) Math.pow(matriz.length, 2)];
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz.length; j++) {
-                arrayVetor[posicao] = matriz[i][j];
-                posicao++;
+                arrayVetor[posicao++] = matriz[i][j];
             }
         }
         return arrayVetor;
