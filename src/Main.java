@@ -2,6 +2,7 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.Scanner;
 
@@ -38,30 +39,7 @@ public class Main {
                     break;
 
                 case 2:
-                    System.out.print("Nome da pasta com os ficheiros csv: ");
-                    String pasta = scanner.nextLine();
-                    File diretorio = new File(pasta);
-                    File[] ficheiros = diretorio.listFiles();
-                    int posicao = 0;
-                    int numDeFicheiros = ficheiros.length;
-                    double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
-                    double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
-                    double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
-                    for (int j = 0; j < matrizNova[0].length; j++) {
-                        for (int i = 0; i < matrizVetor.length; i++) {
-                            matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
-                            matrizVetor = criacaoDeArrayVetor(matriz);
-                            matrizNova[i][j] = matrizVetor[posicao];
-                            posicao++;
-                        }
-                        posicao = 0;
-                    }
-                    for (int i = 0; i < matrizNova.length; i++) {
-                        for (int j = 0; j < matrizNova[0].length; j++) {
-                            System.out.printf("%.3f ", matrizNova[i][j]);
-                        }
-                        System.out.println();
-                    }
+                    Funcionalidade2();
                     break;
 
                 case 3:
@@ -82,11 +60,91 @@ public class Main {
         scanner.close();
     }
 
+    public static void Funcionalidade2() throws FileNotFoundException {
+        String tipoDeFicheiro = "csv";
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Nome da pasta com os ficheiros csv: ");
+        String pasta = scanner.nextLine();
+        if (!validarCaminhoFicheiro(pasta)) return;
+
+        File diretorio = new File(pasta);
+        File[] ficheiros = diretorio.listFiles();
+
+        int posicao = 0;
+        int numDeFicheiros = ficheiros.length;
+
+        if (!validarTipoDeFicheiro(numDeFicheiros, ficheiros, tipoDeFicheiro)) return;
+
+        if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
+
+        System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
+        int k = scanner.nextInt();
+        k = ajustarK(pasta + "/" + ficheiros[0].getName(), k);
+
+        double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
+        double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
+        double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
+        for (int j = 0; j < matrizNova[0].length; j++) {
+            for (int i = 0; i < matrizVetor.length; i++) {
+                matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+                matrizVetor = criacaoDeArrayVetor(matriz);
+                matrizNova[i][j] = matrizVetor[posicao];
+                posicao++;
+            }
+            posicao = 0;
+        }
+    }
+
+    private static boolean validarTipoDeFicheiro(int numDeFicheiros, File[] ficheiros, String tipoDeFicheiro) {
+        int cont = 0;
+        for (int i = 0; i < numDeFicheiros; i++){
+            String[] nomeDoFicheiro = ficheiros[i].getName().split("[.]");
+            if (nomeDoFicheiro[nomeDoFicheiro.length-1].equals(tipoDeFicheiro)){
+                cont++;
+            }
+        }
+
+        if (cont < numDeFicheiros){
+            System.out.println("Há ficheiros que não são do tipo " + tipoDeFicheiro.toUpperCase() + " na pasta");
+            return false;
+        }
+
+        return true;
+    }
+
     //valida se o caminho fornecido existe
     private static boolean validarCaminhoFicheiro(String ficheiroCSV) {
         File file = new File(ficheiroCSV);
         if (!file.exists()) {
             System.out.println("O caminho indicado não existe");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException{
+
+        int contadorAlturaIgual = 0;
+        int tamanhoAltura = preencherMatriz(pasta + "/" + ficheiros[0].getName()).length;
+        for (int i = 1; i < numDeFicheiros; i++){
+            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName()).length;
+            if (tamanhoMatriz == tamanhoAltura){
+                contadorAlturaIgual++;
+            }
+        }
+
+        int contadorAlturaIgual2 = 0;
+        int tamanhoAltura2 = preencherMatriz(pasta + "/" + ficheiros[0].getName())[0].length;
+        for (int i = 1; i < numDeFicheiros; i++){
+            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName())[0].length;
+            if (tamanhoMatriz == tamanhoAltura2){
+                contadorAlturaIgual2++;
+            }
+        }
+
+        if (contadorAlturaIgual < numDeFicheiros - 1 || contadorAlturaIgual2 < numDeFicheiros - 1){
+            System.out.println("Nem todos os ficheiros têm o mesmo tamanho");
             return false;
         }
         return true;
