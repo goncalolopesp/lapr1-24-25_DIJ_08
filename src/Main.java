@@ -94,6 +94,37 @@ public class Main {
             }
             posicao = 0;
         }
+
+        double[] vetorMedia = mediaColunas(matrizNova);
+
+        double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
+        double[][] matrizAT = transporMatriz(matrizA);
+
+        double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
+        double[][] matrizC = obterMatrizC(matrizAT_A);
+
+        double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
+
+        double[] valoresPropriosC = obterValoresProprios(matrizC,vetoresPropriosC);
+
+        vetoresPropriosC= tratamentoDeVetores(vetoresPropriosC);
+
+        double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
+
+        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A,vetoresPropriosAT_A);
+
+        vetoresPropriosAT_A= tratamentoDeVetores(vetoresPropriosAT_A);
+
+        double[][] vetorU = obterVetorU(matrizA, vetoresPropriosAT_A);
+
+        System.out.println("Vetor µ:");
+        for (int i = 0; i < vetorMedia.length; i++) {
+            System.out.printf("%.1f ", vetorMedia[i]);
+        }
+        System.out.println();
+        System.out.println("Matriz de covariância:");
+        mostrarMatriz(matrizC);
+
     }
 
     private static boolean validarTipoDeFicheiro(int numDeFicheiros, File[] ficheiros, String tipoDeFicheiro) {
@@ -150,6 +181,58 @@ public class Main {
         return true;
     }
 
+    //calcula o vetor média (coluna)
+    private static double[] mediaColunas(double[][] matrizM) {
+        double[] medias = new double[matrizM[0].length];
+        for (int i = 0; i < matrizM[0].length; i++) {
+            for (int j = 0; j < matrizM.length; j++) {
+                medias[i] += matrizM[j][i];
+            }
+            medias[i] /= matrizM.length;
+        }
+        return medias;
+    }
+
+    private static double[][] obterVetorU(double[][] matrizA, double[][] vetoresPropriosATA) {
+        int linhas = matrizA.length;
+        int colunas = vetoresPropriosATA[0].length;
+
+        double[][] vetorU = new double[linhas][colunas];
+        for (int i = 0; i < linhas; i++) {
+            for (int j = 0; j < colunas; j++) {
+                vetorU[i][j] = 0; // Inicializar a célula
+                for (int k = 0; k < matrizA[0].length; k++) {
+                    vetorU[i][j] += matrizA[i][k] * vetoresPropriosATA[k][j];
+                }
+            }
+        }
+
+        return vetorU;
+    }
+
+    //obtem a matriz phi
+    private static double[][] obterMatrizPhi(double[][] matrizM, double[] vetorMedia) {
+        double[][] matrizA = new double[matrizM.length][matrizM[0].length];
+        for (int i = 0; i < matrizM.length; i++) {
+            for (int j = 0; j < matrizM[0].length; j++) {
+                matrizA[i][j] = matrizM[i][j] - vetorMedia[j];
+            }
+        }
+
+        return matrizA;
+    }
+
+    //obtem a matriz C apartir do resultado da multiplicação de A com A^T
+    private static double[][] obterMatrizC(double[][] matrizAAt) {
+        double[][] matrizC = new double[matrizAAt.length][matrizAAt[0].length];
+        for (int i = 0; i < matrizC.length; i++) {
+            for (int j = 0; j < matrizC[i].length; j++) {
+                matrizC[i][j] = matrizAAt[i][j]/ matrizC.length;
+            }
+        }
+        return matrizC;
+    }
+
     //efetua todas as validações necessárias da matriz
     private static boolean validarMatriz(String ficheiroCSV) throws FileNotFoundException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
@@ -192,27 +275,20 @@ public class Main {
     private static void decomporMatriz(String ficheiroCSV, int k) throws IOException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
 
-        EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
+        double[][] vetoresProprios = obterVetoresProprios(matriz);
 
-        //obtém um array unidimensional com os valores próprios
-        double[] valoresProprios = decomposicao.getRealEigenvalues();
+        double[] valoresProprios = obterValoresProprios(matriz,vetoresProprios);
 
-        //obtém um array bi-dimensional com os vetores próprios
-        double[][] vetoresProprios = new double[matriz.length][];
-        for (int i = 0; i < matriz.length; i++) {
-            vetoresProprios[i] = decomposicao.getEigenvector(i).toArray();
-        }
+        vetoresProprios= tratamentoDeVetores(vetoresProprios);
 
-        //ordena os valores
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
+
+
         System.out.println();
         System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n", k);
 
         System.out.println();
 
-        //faz todas as operações necessárias, incluíndo a ordenação por ordem decrescente
-        vetoresProprios = transporMatriz(vetoresProprios);
-        vetoresProprios = normalizarColunas(vetoresProprios);
 
         //imprime todos os valores próprios usados na decomposição
         System.out.println("Valores próprios usados:");
@@ -281,6 +357,35 @@ public class Main {
         System.out.println("Matriz reconstruída guardada na pasta 'Output' com o nome '" + nomeArquivo + "'");
         System.out.println();
 
+    }
+
+    //efetua a transposta e normaliza os vetores proprios
+    private static double[][] tratamentoDeVetores(double[][] vetoresProprios) {
+        vetoresProprios = transporMatriz(vetoresProprios);
+        vetoresProprios = normalizarColunas(vetoresProprios);
+
+        return vetoresProprios;
+    }
+
+    //obtem os vetores proprios de uma matriz
+    private static double[][] obterVetoresProprios(double[][] matriz) {
+        EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
+        double[][] vetoresProprios = new double[matriz.length][];
+        for (int i = 0; i < matriz.length; i++) {
+            vetoresProprios[i] = decomposicao.getEigenvector(i).toArray();
+        }
+
+        return vetoresProprios;
+
+    }
+
+    //obtem os valores prorpios de uma matriz
+    private static double[] obterValoresProprios(double[][] matriz, double [][] vetoresProprios) {
+        EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
+        double[] valoresProprios = decomposicao.getRealEigenvalues();
+        double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
+
+        return valoresProprios;
     }
 
     // Calcular o erro absoluto médio
