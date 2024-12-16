@@ -105,17 +105,21 @@ public class Main {
 
         double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
 
-        double[] valoresPropriosC = obterValoresProprios(matrizC,vetoresPropriosC);
+        double[] valoresPropriosC = obterValoresProprios(matrizC, vetoresPropriosC);
 
-        vetoresPropriosC= tratamentoDeVetores(vetoresPropriosC);
+        vetoresPropriosC = tratamentoDeVetores(vetoresPropriosC);
 
         double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
 
-        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A,vetoresPropriosAT_A);
+        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A, vetoresPropriosAT_A);
 
-        vetoresPropriosAT_A= tratamentoDeVetores(vetoresPropriosAT_A);
+        vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
 
-        double[][] vetorU = obterVetorU(matrizA, vetoresPropriosAT_A);
+        double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
+        vetorU = normalizarColunas(vetorU);
+
+        System.out.println("Vetor U:");
+        mostrarMatriz(matrizA);
 
         System.out.println("Vetor µ:");
         for (int i = 0; i < vetorMedia.length; i++) {
@@ -124,19 +128,23 @@ public class Main {
         System.out.println();
         System.out.println("Matriz de covariância:");
         mostrarMatriz(matrizC);
+        System.out.println("Número de eigenfaces:");
+        System.out.println(k);
+
+        double[][] vetorUT = transporMatriz(vetorU);
 
     }
 
     private static boolean validarTipoDeFicheiro(int numDeFicheiros, File[] ficheiros, String tipoDeFicheiro) {
         int cont = 0;
-        for (int i = 0; i < numDeFicheiros; i++){
+        for (int i = 0; i < numDeFicheiros; i++) {
             String[] nomeDoFicheiro = ficheiros[i].getName().split("[.]");
-            if (nomeDoFicheiro[nomeDoFicheiro.length-1].equals(tipoDeFicheiro)){
+            if (nomeDoFicheiro[nomeDoFicheiro.length - 1].equals(tipoDeFicheiro)) {
                 cont++;
             }
         }
 
-        if (cont < numDeFicheiros){
+        if (cont < numDeFicheiros) {
             System.out.println("Há ficheiros que não são do tipo " + tipoDeFicheiro.toUpperCase() + " na pasta");
             return false;
         }
@@ -154,27 +162,27 @@ public class Main {
         return true;
     }
 
-    public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException{
+    public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException {
 
         int contadorAlturaIgual = 0;
         int tamanhoAltura = preencherMatriz(pasta + "/" + ficheiros[0].getName()).length;
-        for (int i = 1; i < numDeFicheiros; i++){
+        for (int i = 1; i < numDeFicheiros; i++) {
             int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName()).length;
-            if (tamanhoMatriz == tamanhoAltura){
+            if (tamanhoMatriz == tamanhoAltura) {
                 contadorAlturaIgual++;
             }
         }
 
         int contadorAlturaIgual2 = 0;
         int tamanhoAltura2 = preencherMatriz(pasta + "/" + ficheiros[0].getName())[0].length;
-        for (int i = 1; i < numDeFicheiros; i++){
+        for (int i = 1; i < numDeFicheiros; i++) {
             int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName())[0].length;
-            if (tamanhoMatriz == tamanhoAltura2){
+            if (tamanhoMatriz == tamanhoAltura2) {
                 contadorAlturaIgual2++;
             }
         }
 
-        if (contadorAlturaIgual < numDeFicheiros - 1 || contadorAlturaIgual2 < numDeFicheiros - 1){
+        if (contadorAlturaIgual < numDeFicheiros - 1 || contadorAlturaIgual2 < numDeFicheiros - 1) {
             System.out.println("Nem todos os ficheiros têm o mesmo tamanho");
             return false;
         }
@@ -191,23 +199,6 @@ public class Main {
             medias[i] /= matrizM.length;
         }
         return medias;
-    }
-
-    private static double[][] obterVetorU(double[][] matrizA, double[][] vetoresPropriosATA) {
-        int linhas = matrizA.length;
-        int colunas = vetoresPropriosATA[0].length;
-
-        double[][] vetorU = new double[linhas][colunas];
-        for (int i = 0; i < linhas; i++) {
-            for (int j = 0; j < colunas; j++) {
-                vetorU[i][j] = 0; // Inicializar a célula
-                for (int k = 0; k < matrizA[0].length; k++) {
-                    vetorU[i][j] += matrizA[i][k] * vetoresPropriosATA[k][j];
-                }
-            }
-        }
-
-        return vetorU;
     }
 
     //obtem a matriz phi
@@ -227,7 +218,7 @@ public class Main {
         double[][] matrizC = new double[matrizAAt.length][matrizAAt[0].length];
         for (int i = 0; i < matrizC.length; i++) {
             for (int j = 0; j < matrizC[i].length; j++) {
-                matrizC[i][j] = matrizAAt[i][j]/ matrizC.length;
+                matrizC[i][j] = matrizAAt[i][j] / matrizC.length;
             }
         }
         return matrizC;
@@ -277,9 +268,9 @@ public class Main {
 
         double[][] vetoresProprios = obterVetoresProprios(matriz);
 
-        double[] valoresProprios = obterValoresProprios(matriz,vetoresProprios);
+        double[] valoresProprios = obterValoresProprios(matriz, vetoresProprios);
 
-        vetoresProprios= tratamentoDeVetores(vetoresProprios);
+        vetoresProprios = tratamentoDeVetores(vetoresProprios);
 
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
 
@@ -380,7 +371,7 @@ public class Main {
     }
 
     //obtem os valores prorpios de uma matriz
-    private static double[] obterValoresProprios(double[][] matriz, double [][] vetoresProprios) {
+    private static double[] obterValoresProprios(double[][] matriz, double[][] vetoresProprios) {
         EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
         double[] valoresProprios = decomposicao.getRealEigenvalues();
         double[] valoresPropriosOrdenados = ordenarArray(valoresProprios, vetoresProprios);
