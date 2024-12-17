@@ -13,12 +13,15 @@ public class Main {
         boolean ativo = true;
 
         while (ativo) {
-            System.out.println("Menu:");
-            System.out.println("1. Decompor Matriz");
-            System.out.println("2. Reconstruir Imagens");
-            System.out.println("3. Obter Imagem Semelhante");
-            System.out.println("4. Sair");
-            System.out.print("Escolha uma opção: ");
+            System.out.println("****************************************");
+            System.out.println("                 MENU           ");
+            System.out.println("****************************************");
+            System.out.println("  1. Decompor Matriz                  ");
+            System.out.println("  2. Reconstruir Imagens              ");
+            System.out.println("  3. Obter Imagem Semelhante          ");
+            System.out.println("  4. Sair                           ");
+            System.out.println("****************************************");
+            System.out.print("Escolha uma opção (1-4): ");
 
             int opcao = scanner.nextInt();
             scanner.nextLine();
