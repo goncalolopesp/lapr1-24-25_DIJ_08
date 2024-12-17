@@ -181,13 +181,23 @@ public class Main {
 
     //calcula o vetor média (coluna)
     private static double[] mediaColunas(double[][] matrizM) {
-        double[] medias = new double[matrizM[0].length];
-        for (int i = 0; i < matrizM[0].length; i++) {
-            for (int j = 0; j < matrizM.length; j++) {
-                medias[i] += matrizM[j][i];
+        int numLinhas = matrizM.length;
+        int numColunas = matrizM[0].length;
+        double[] somaLinhas = new double[numLinhas];
+        double[] medias = new double[numLinhas];
+
+        // Soma os valores das colunas para cada linha
+        for (int i = 0; i < numLinhas; i++) {
+            for (int j = 0; j < numColunas; j++) {
+                somaLinhas[i] += matrizM[i][j];
             }
-            medias[i] /= matrizM.length;
         }
+
+        // Divide cada soma pelo número de colunas
+        for (int i = 0; i < numLinhas; i++) {
+            medias[i] = somaLinhas[i] / numColunas;
+        }
+
         return medias;
     }
 
@@ -591,7 +601,7 @@ public class Main {
 
         vetoresPropriosAT_A= tratamentoDeVetores(vetoresPropriosAT_A);
 
-        double[][] vetorU = obterVetorU(matrizA, vetoresPropriosAT_A);
+        double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
 
         double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
 
