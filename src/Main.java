@@ -206,7 +206,7 @@ public class Main {
         double[][] matrizA = new double[matrizM.length][matrizM[0].length];
         for (int i = 0; i < matrizM.length; i++) {
             for (int j = 0; j < matrizM[0].length; j++) {
-                matrizA[i][j] = matrizM[i][j] - vetorMedia[j];
+                matrizA[i][j] = matrizM[i][j] - vetorMedia[i];
             }
         }
 
