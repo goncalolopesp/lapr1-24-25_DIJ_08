@@ -2,7 +2,6 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.Scanner;
 
@@ -59,7 +58,6 @@ public class Main {
                     System.out.println("Não existe essa opção");
             }
         }
-
         scanner.close();
     }
 
@@ -137,7 +135,6 @@ public class Main {
         System.out.println(k);
 
         double[][] vetorUT = transporMatriz(vetorU);
-
     }
 
     private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
@@ -200,7 +197,6 @@ public class Main {
         for (int i = 0; i < numLinhas; i++) {
             medias[i] = somaLinhas[i] / numColunas;
         }
-
         return medias;
     }
 
@@ -212,7 +208,6 @@ public class Main {
                 matrizA[i][j] = matrizM[i][j] - vetorMedia[i];
             }
         }
-
         return matrizA;
     }
 
@@ -251,7 +246,6 @@ public class Main {
                 }
             }
         }
-
         return true;
     }
 
@@ -350,14 +344,12 @@ public class Main {
         System.out.println();
         System.out.println("Matriz reconstruída guardada na pasta 'Output' com o nome '" + nomeArquivo + "'");
         System.out.println();
-
     }
 
     //efetua a transposta e normaliza os vetores proprios
     private static double[][] tratamentoDeVetores(double[][] vetoresProprios) {
         vetoresProprios = transporMatriz(vetoresProprios);
         vetoresProprios = normalizarColunas(vetoresProprios);
-
         return vetoresProprios;
     }
 
@@ -368,9 +360,7 @@ public class Main {
         for (int i = 0; i < matriz.length; i++) {
             vetoresProprios[i] = decomposicao.getEigenvector(i).toArray();
         }
-
         return vetoresProprios;
-
     }
 
     //obtem os valores prorpios de uma matriz
@@ -548,9 +538,9 @@ public class Main {
     //Tranformação de matrizes em vetores
     public static double[] criacaoDeArrayVetor(double[][] matriz) {
         int posicao = 0;
-        double[] arrayVetor = new double[(int) Math.pow(matriz.length, 2)];
+        double[] arrayVetor = new double[matriz.length * matriz[0].length];
         for (int i = 0; i < matriz.length; i++) {
-            for (int j = 0; j < matriz.length; j++) {
+            for (int j = 0; j < matriz[i].length; j++) {
                 arrayVetor[posicao++] = matriz[i][j];
             }
         }
@@ -561,6 +551,7 @@ public class Main {
         String tipoDeFicheiro = "csv";
         Scanner scanner = new Scanner(System.in);
 
+        System.out.print("Caminho da imagem: ");
         String img = scanner.nextLine();
 
         System.out.print("Nome da pasta com os ficheiros csv: ");
@@ -591,30 +582,70 @@ public class Main {
             }
             posicao = 0;
         }
-        double[] vetorMedia = mediaColunas(matrizNova);
 
-        double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
+        double[] vetorMedia = mediaColunas(matrizNova);
 
         double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
         double[][] matrizAT = transporMatriz(matrizA);
 
         double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
+        double[][] matrizC = obterMatrizC(matrizAT_A);
+
+        double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
+
+        double[] valoresPropriosC = obterValoresProprios(matrizC, vetoresPropriosC);
+
+        vetoresPropriosC = tratamentoDeVetores(vetoresPropriosC);
 
         double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
 
-        vetoresPropriosAT_A= tratamentoDeVetores(vetoresPropriosAT_A);
+        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A, vetoresPropriosAT_A);
+
+        vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
 
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
+        vetorU = normalizarColunas(vetorU);
+
+        double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
 
         double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
 
-        double[] imgIntroduzida = criacaoDeArrayVetor(preencherMatriz(img));
+        double[] omegaNovo = criacaoDeArrayVetor(wNovo);
 
-        double[] distancias = new double[numDeFicheiros];
+        double menor = 999999999;
+        String menorNome = "";
 
-        for (int i = 0; i < numDeFicheiros; i++){
-            //aaaa
+        for (int a = 0; a < omegaNovo.length; a++) {
+            System.out.printf("%.2f ", omegaNovo[a]);
         }
+        System.out.println();
+        System.out.println();
+        for (int i = 0; i < numDeFicheiros; i++){
+            double soma = 0;
+            double[] fiJ = subtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia);
+            double[][] wJ = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ));
+            double[] omegaJ = criacaoDeArrayVetor(wJ);
+
+            for (int a = 0; a < omegaNovo.length; a++) {
+                System.out.printf("%.2f ", omegaJ[a]);
+            }
+            System.out.println();
+            for (int j = 0; j < omegaJ.length; j++){
+                soma += Math.pow(omegaJ[j] - omegaNovo[j], 2);
+            }
+            double distanciaEuclidiana = Math.sqrt(soma);
+
+            System.out.printf("%.2f%n", distanciaEuclidiana);
+
+            if (distanciaEuclidiana < menor){
+                menor = distanciaEuclidiana;
+                menorNome = ficheiros[i].getName();
+            }
+            System.out.println();
+        }
+        System.out.printf("%.2f%n", menor);
+        System.out.println();
+        System.out.println(pasta + "/" + menorNome);
     }
 
     public static double[][] transformarVetorEmColuna(double[] vetor){
@@ -639,5 +670,4 @@ public class Main {
             return novoVetor;
         }
     }
-
 }
