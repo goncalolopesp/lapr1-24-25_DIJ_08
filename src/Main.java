@@ -2,6 +2,8 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Scanner;
 
@@ -253,6 +255,14 @@ public class Main {
     private static int ajustarK(String ficheiroCSV, int k) throws FileNotFoundException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
         if (k <= 0 || k > matriz.length) {
+            System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
+            k = matriz.length;
+        }
+        return k;
+    }
+
+    public static int ajustarKEmMatriz(double[][] matriz, int k) {
+        if (k <= 0 || k > matriz[0].length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
             k = matriz.length;
         }
@@ -547,7 +557,7 @@ public class Main {
         return arrayVetor;
     }
 
-    public static void funcionalidade3() throws FileNotFoundException {
+    public static void funcionalidade3() throws IOException {
         String tipoDeFicheiro = "csv";
         Scanner scanner = new Scanner(System.in);
 
@@ -557,6 +567,9 @@ public class Main {
         System.out.print("Nome da pasta com os ficheiros csv: ");
         String pasta = scanner.nextLine();
         if (!validarCaminhoFicheiro(pasta)) return;
+
+        System.out.println("Quantos eigenfaces pretende utilizar: ");
+        int k = scanner.nextInt();
 
         File diretorio = new File(pasta);
         File[] ficheiros = diretorio.listFiles();
@@ -582,6 +595,8 @@ public class Main {
             }
             posicao = 0;
         }
+
+        k = ajustarKEmMatriz(matrizNova, k);
 
         double[] vetorMedia = mediaColunas(matrizNova);
 
@@ -646,6 +661,43 @@ public class Main {
         System.out.printf("%.2f%n", menor);
         System.out.println();
         System.out.println(pasta + "/" + menorNome);
+
+        String pastaOutput = "Identificacao/" + menorNome.split("[.]")[0] + ".jpg";
+        writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
+    }
+
+    public static int[][] convertDoubleArrayToInteger(double[][] arr){
+        int[][] arrNovo = new int[arr.length][arr[0].length];
+        for (int i = 0; i < arr.length; i++){
+            for (int j = 0; j < arr[0].length; j++) {
+                arrNovo[i][j] = (int)arr[i][j];
+            }
+        }
+        return arrNovo;
+    }
+
+    public static void writeArrayAsImage(int[][] array, String outputFilePath) throws IOException {
+        int height = array.length;
+        int width = array[0].length;
+
+        // Create a BufferedImage
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+
+        // Set the pixel intensities
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int intensity = array[y][x];
+                if (intensity < 0 || intensity > 255) {
+                    throw new IllegalArgumentException("Pixel intensity must be between 0 and 255.");
+                }
+                int rgb = (intensity << 16) | (intensity << 8) | intensity; // Set the same value for R, G, B
+                image.setRGB(x, y, rgb);
+            }
+        }
+
+        // Write the image to the file
+        File outputFile = new File(outputFilePath);
+        ImageIO.write(image, "jpg", outputFile);
     }
 
     public static double[][] transformarVetorEmColuna(double[] vetor){
