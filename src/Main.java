@@ -39,11 +39,11 @@ public class Main {
                     break;
 
                 case 2:
-                    Funcionalidade2();
+                    funcionalidade2();
                     break;
 
                 case 3:
-                    System.out.println("Ainda não funciona");
+                    funcionalidade3();
                     break;
 
                 case 4:
@@ -60,7 +60,7 @@ public class Main {
         scanner.close();
     }
 
-    public static void Funcionalidade2() throws FileNotFoundException {
+    public static void funcionalidade2() throws FileNotFoundException {
         String tipoDeFicheiro = "csv";
         Scanner scanner = new Scanner(System.in);
 
@@ -74,7 +74,9 @@ public class Main {
         int posicao = 0;
         int numDeFicheiros = ficheiros.length;
 
-        if (!validarTipoDeFicheiro(numDeFicheiros, ficheiros, tipoDeFicheiro)) return;
+        for (int i = 0; i < numDeFicheiros; i++){
+            if (!validarTipoDeFicheiro(ficheiros[i].getName(), tipoDeFicheiro)) return;
+        }
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
 
@@ -135,21 +137,9 @@ public class Main {
 
     }
 
-    private static boolean validarTipoDeFicheiro(int numDeFicheiros, File[] ficheiros, String tipoDeFicheiro) {
-        int cont = 0;
-        for (int i = 0; i < numDeFicheiros; i++) {
-            String[] nomeDoFicheiro = ficheiros[i].getName().split("[.]");
-            if (nomeDoFicheiro[nomeDoFicheiro.length - 1].equals(tipoDeFicheiro)) {
-                cont++;
-            }
-        }
-
-        if (cont < numDeFicheiros) {
-            System.out.println("Há ficheiros que não são do tipo " + tipoDeFicheiro.toUpperCase() + " na pasta");
-            return false;
-        }
-
-        return true;
+    private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
+        String[] tipoDoFicheiro = nomeDoFicheiro.split("[.]");
+        return tipoDoFicheiro[tipoDoFicheiro.length - 1].equals(tipoDeFicheiro);
     }
 
     //valida se o caminho fornecido existe
@@ -553,4 +543,88 @@ public class Main {
         }
         return arrayVetor;
     }
+
+    public static void funcionalidade3() throws FileNotFoundException {
+        String tipoDeFicheiro = "csv";
+        Scanner scanner = new Scanner(System.in);
+
+        String img = scanner.nextLine();
+
+        System.out.print("Nome da pasta com os ficheiros csv: ");
+        String pasta = scanner.nextLine();
+        if (!validarCaminhoFicheiro(pasta)) return;
+
+        File diretorio = new File(pasta);
+        File[] ficheiros = diretorio.listFiles();
+
+        int posicao = 0;
+        int numDeFicheiros = ficheiros.length;
+
+        if (!validarTipoDeFicheiro(img, tipoDeFicheiro)) return;
+
+        if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
+
+        double[] vetorImg = criacaoDeArrayVetor(preencherMatriz(img));
+
+        double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
+        double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
+        double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
+        for (int j = 0; j < matrizNova[0].length; j++) {
+            for (int i = 0; i < matrizVetor.length; i++) {
+                matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+                matrizVetor = criacaoDeArrayVetor(matriz);
+                matrizNova[i][j] = matrizVetor[posicao];
+                posicao++;
+            }
+            posicao = 0;
+        }
+        double[] vetorMedia = mediaColunas(matrizNova);
+
+        double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
+
+        double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
+        double[][] matrizAT = transporMatriz(matrizA);
+
+        double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
+
+        double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
+
+        vetoresPropriosAT_A= tratamentoDeVetores(vetoresPropriosAT_A);
+
+        double[][] vetorU = obterVetorU(matrizA, vetoresPropriosAT_A);
+
+        double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
+
+        double[] imgIntroduzida = criacaoDeArrayVetor(preencherMatriz(img));
+
+        double[] distancias = new double[numDeFicheiros];
+
+        for (int i = 0; i < numDeFicheiros; i++){
+            //aaaa
+        }
+    }
+
+    public static double[][] transformarVetorEmColuna(double[] vetor){
+        int colunas = 1;
+        int linhas = vetor.length;
+        double[][] vetorColuna = new double[linhas][colunas];
+        for (int i = 0; i < linhas; i++){
+            vetorColuna[i][0] = vetor[i];
+        }
+        return vetorColuna;
+    }
+
+    private static double[] subtrairArrays(double[] vetor1, double[] vetor2) {
+        double[] novoVetor = new double[vetor1.length];
+        if (vetor1.length != vetor2.length){
+            System.out.println("Os vetores não têm o mesmo tamanho (Subtração de matrizes não pôde ser realizada)");
+            return null;
+        }else{
+            for (int i = 0; i < vetor1.length; i++){
+                novoVetor[i] = vetor1[i] - vetor2[i];
+            }
+            return novoVetor;
+        }
+    }
+
 }
