@@ -9,6 +9,10 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        menu();
+    }
+
+    public static void menu() throws IOException {
         Scanner scanner = new Scanner(System.in);
         // variável booleana para manter o menu ativo até o utilizador usar a opção sair
         boolean ativo = true;
@@ -67,7 +71,6 @@ public class Main {
             decomporMatriz(ficheiroCSV, k);
         }
     }
-
 
     public static void funcionalidade2() throws FileNotFoundException {
         String tipoDeFicheiro = "csv";
@@ -320,6 +323,7 @@ public class Main {
         return k;
     }
 
+    //ajusta automáticamente os valores de k para uma matriz
     public static int ajustarKEmMatriz(double[][] matriz, int k) {
         if (k <= 0 || k > matriz[0].length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
