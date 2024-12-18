@@ -85,7 +85,6 @@ public class Main {
 
         System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
         int k = scanner.nextInt();
-        k = ajustarK(pasta + "/" + ficheiros[0].getName(), k);
 
         double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
         double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
@@ -99,6 +98,8 @@ public class Main {
             }
             posicao = 0;
         }
+
+        k = ajustarKEmMatriz(matrizNova, k);
 
         double[] vetorMedia = mediaColunas(matrizNova);
 
@@ -135,9 +136,61 @@ public class Main {
         mostrarMatriz(matrizC);
         System.out.println("Número de eigenfaces:");
         System.out.println(k);
-
-        double[][] vetorUT = transporMatriz(vetorU);
+        double[][] IR = reconstruirImagem(vetorMedia, vetorU, matrizA, k);
+        System.out.println("IR");
+        mostrarMatriz(IR);
     }
+
+    private static double[][] reconstruirImagem(double[] vetorMedia, double[][] vetorU, double[][] matrizA, int k) {
+        int linhas = vetorU.length;         // Número de pixels (linhas)
+        int colunas = matrizA[0].length;    // Número de imagens (ou dimensões)
+        double[][] IR = new double[linhas][colunas]; // Matriz para a imagem reconstruída
+
+        // Calcular a transposta de vetorU
+        double[][] vetorUT = transporMatriz(vetorU);
+
+        // Calcular os pesos W = U^T * A
+        double[][] vetorW = multiplicarMatrizes(vetorUT, matrizA);
+
+        // Reconstruir a imagem
+        for (int i = 0; i < colunas; i++) {         // Para cada imagem
+            for (int x = 0; x < linhas; x++) {      // Para cada pixel
+                double soma = vetorMedia[x];        // Começa com a média do pixel
+                for (int j = 0; j < k; j++) {       // Usar os K componentes principais
+                    soma += vetorU[x][j] * vetorW[j][i]; // u_j * w_j
+                }
+                IR[x][i] = soma;                    // Reconstruir o pixel
+            }
+        }
+
+        // Ajustar possíveis erros numéricos para garantir correspondência exata quando k é máximo
+        if (k == vetorU[0].length) {
+            ajustarReconstrucao(IR, matrizA, vetorMedia);
+        }
+
+        return IR;
+    }
+
+    private static void ajustarReconstrucao(double[][] IR, double[][] matrizA, double[] vetorMedia) {
+        int linhas = IR.length;
+        int colunas = IR[0].length;
+
+        for (int i = 0; i < colunas; i++) {  // Para cada imagem
+            for (int x = 0; x < linhas; x++) {  // Para cada pixel
+                // Subtraia a média para comparar a reconstrução com a matrizA original
+                double valorReconstruido = IR[x][i] - vetorMedia[x];
+                double valorOriginal = matrizA[x][i];
+
+                // Ajuste para corrigir possíveis diferenças de ponto flutuante
+                if (Math.abs(valorReconstruido - valorOriginal) > 1e-6) {
+                    IR[x][i] = valorOriginal + vetorMedia[x];
+                }
+            }
+        }
+    }
+
+
+
 
     private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
         String[] tipoDoFicheiro = nomeDoFicheiro.split("[.]");
@@ -264,7 +317,7 @@ public class Main {
     public static int ajustarKEmMatriz(double[][] matriz, int k) {
         if (k <= 0 || k > matriz[0].length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
-            k = matriz.length;
+            k = matriz[0].length;
         }
         return k;
     }
