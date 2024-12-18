@@ -763,6 +763,25 @@ public class Main {
         ImageIO.write(image, "jpg", outputFile);
     }
 
+    //Verificar se uma pasta está vazia
+    public static boolean isEmpty(String pasta){
+        File dir = new File(pasta);
+        if (dir.listFiles().length == 0){
+            return true;
+        }
+        return false;
+    }
+
+    //Inverter um vetor
+    private static double[] inverterVetor(double[] arr) {
+        double[] aux = new double[arr.length];
+        int cont = 0;
+        for (int i = arr.length - 1; i > 0; i--) {
+            aux[cont++] = arr[i];
+        }
+        return aux;
+    }
+
     public static double[][] transformarVetorEmColuna(double[] vetor){
         int colunas = 1;
         int linhas = vetor.length;
