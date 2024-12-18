@@ -29,17 +29,7 @@ public class Main {
 
             switch (opcao) {
                 case 1:
-                    System.out.print("Indica o caminho do ficheiro CSV: ");
-                    String ficheiroCSV = scanner.nextLine();
-
-                    System.out.print("Digita a quantidade de valores/vetores próprios a usar: ");
-                    int k = scanner.nextInt();
-
-                    //verifica se a matriz e a quantidade de vetores/valores prórpios é válida
-                    if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(ficheiroCSV)) {
-                        k = ajustarK(ficheiroCSV, k);
-                        decomporMatriz(ficheiroCSV, k);
-                    }
+                    funcionalidade1();
                     break;
 
                 case 2:
@@ -62,6 +52,22 @@ public class Main {
         }
         scanner.close();
     }
+
+    public static void funcionalidade1() throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Indica o caminho do ficheiro CSV: ");
+        String ficheiroCSV = scanner.nextLine();
+
+        System.out.print("Digita a quantidade de valores/vetores próprios a usar: ");
+        int k = scanner.nextInt();
+
+        //verifica se a matriz e a quantidade de vetores/valores prórpios é válida
+        if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(ficheiroCSV)) {
+            k = ajustarK(ficheiroCSV, k);
+            decomporMatriz(ficheiroCSV, k);
+        }
+    }
+
 
     public static void funcionalidade2() throws FileNotFoundException {
         String tipoDeFicheiro = "csv";
