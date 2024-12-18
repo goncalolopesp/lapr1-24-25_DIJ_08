@@ -8,6 +8,150 @@ import java.io.*;
 import java.util.Scanner;
 
 public class Main {
+    //TESTES
+
+    //valida se o caminho fornecido existe
+    private static boolean validarCaminhoFicheiro(String ficheiroCSV) {
+        File file = new File(ficheiroCSV);
+        if (!file.exists()) {
+            System.out.println("O caminho indicado não existe");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
+        String[] tipoDoFicheiro = nomeDoFicheiro.split("[.]");
+        return tipoDoFicheiro[tipoDoFicheiro.length - 1].equals(tipoDeFicheiro);
+    }
+
+    public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException {
+
+        int contadorAlturaIgual = 0;
+        int tamanhoAltura = preencherMatriz(pasta + "/" + ficheiros[0].getName()).length;
+        for (int i = 1; i < numDeFicheiros; i++) {
+            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName()).length;
+            if (tamanhoMatriz == tamanhoAltura) {
+                contadorAlturaIgual++;
+            }
+        }
+
+        int contadorAlturaIgual2 = 0;
+        int tamanhoAltura2 = preencherMatriz(pasta + "/" + ficheiros[0].getName())[0].length;
+        for (int i = 1; i < numDeFicheiros; i++) {
+            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName())[0].length;
+            if (tamanhoMatriz == tamanhoAltura2) {
+                contadorAlturaIgual2++;
+            }
+        }
+
+        if (contadorAlturaIgual < numDeFicheiros - 1 || contadorAlturaIgual2 < numDeFicheiros - 1) {
+            System.out.println("Nem todos os ficheiros têm o mesmo tamanho");
+            return false;
+        }
+        return true;
+    }
+
+    //verifica se a matriz é quadrada
+    public static boolean isSquareMatrix(double[][] matriz) {
+        if (matriz.length != matriz[0].length) {
+            return false;
+        }
+        return true;
+    }
+
+    //verfiica se é uma matriz quadrada de índice menor ou igual que 256
+    public static boolean isSquareMatrixSmallerThan(double[][] matriz, int maxTamanho) {
+        if (matriz.length > maxTamanho) {
+            System.out.println("O tamanho da matriz é superior a 256!");
+            return false;
+        }
+        return true;
+    }
+
+    //verifica se a matriz é simétrica
+    public static boolean isSquareMatrixSimetric(double[][] matriz) {
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                if (matriz[i][j] != matriz[j][i]) {
+                    System.out.println("A matriz indicada não é simétrica");
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    //efetua todas as validações necessárias da matriz
+    private static boolean validarMatriz(String ficheiroCSV) throws FileNotFoundException {
+        double[][] matriz = preencherMatriz(ficheiroCSV);
+
+        if (!isSquareMatrix(matriz)) return false;
+
+        if (!isSquareMatrixSmallerThan(matriz, 256)) return false;
+
+        if (!isSquareMatrixSimetric(matriz)) return false;
+
+        return true;
+    }
+
+    //Verificar se uma pasta está vazia
+    public static boolean isEmpty(String pasta){
+        File dir = new File(pasta);
+        if (dir.listFiles().length == 0){
+            return true;
+        }
+        return false;
+    }
+
+    //Verificar se é possível fazer a subtração de matrizes
+    private static boolean canSubtrairArrays(double[] vetor1, double[] vetor2) {
+        if (vetor1.length != vetor2.length){
+            System.out.println("Os vetores não têm o mesmo tamanho (Subtração de matrizes não pode ser realizada)");
+            return false;
+        }
+        return true;
+    }
+
+    //Verificar se podemos multiplicar matrizes
+    private static boolean canMultiplyMatrizes(double[][] matrizA, double[][] matrizB) {
+        // Compara o número de colunas da matriz A com o número de linhas da matriz B
+        if (matrizA[0].length != matrizB.length) {
+            return false;
+        }
+        return true;
+    }
+
+    //Verificar se um número está num intervalo de valores e se o número é inteiro
+    public static boolean verificarNumerosETiposDeCadaMatriz(double[][] matriz) {
+        final int LIMITEMINIMO = 0;
+        final int LIMITEMAXIMO = 255;
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[0].length; j++) {
+                if (matriz[i][j] < LIMITEMINIMO || matriz[i][j] > LIMITEMAXIMO) {
+                    return false;
+                }
+                if (!((int)matriz[i][j] == matriz[i][j])){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    //Verificar se uma string tem espaços
+    private static boolean temEspacos(String valore) {
+        for (int i = 0; i < valore.length(); i++) {
+            if (valore.charAt(i) == ' ') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    //Codigo
     public static void main(String[] args) throws IOException {
         menu();
     }
@@ -115,6 +259,7 @@ public class Main {
         double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
         double[][] matrizAT = transporMatriz(matrizA);
 
+        if (!canMultiplyMatrizes(matrizAT, matrizA)) return;
         double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
         double[][] matrizC = obterMatrizC(matrizAT_A);
 
@@ -130,6 +275,7 @@ public class Main {
 
         vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
 
+        if (canMultiplyMatrizes(matrizA, vetoresPropriosAT_A)) return;
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
         vetorU = normalizarColunas(vetorU);
 
@@ -198,51 +344,6 @@ public class Main {
         }
     }
 
-
-
-
-    private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
-        String[] tipoDoFicheiro = nomeDoFicheiro.split("[.]");
-        return tipoDoFicheiro[tipoDoFicheiro.length - 1].equals(tipoDeFicheiro);
-    }
-
-    //valida se o caminho fornecido existe
-    private static boolean validarCaminhoFicheiro(String ficheiroCSV) {
-        File file = new File(ficheiroCSV);
-        if (!file.exists()) {
-            System.out.println("O caminho indicado não existe");
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException {
-
-        int contadorAlturaIgual = 0;
-        int tamanhoAltura = preencherMatriz(pasta + "/" + ficheiros[0].getName()).length;
-        for (int i = 1; i < numDeFicheiros; i++) {
-            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName()).length;
-            if (tamanhoMatriz == tamanhoAltura) {
-                contadorAlturaIgual++;
-            }
-        }
-
-        int contadorAlturaIgual2 = 0;
-        int tamanhoAltura2 = preencherMatriz(pasta + "/" + ficheiros[0].getName())[0].length;
-        for (int i = 1; i < numDeFicheiros; i++) {
-            int tamanhoMatriz = preencherMatriz(pasta + "/" + ficheiros[i].getName())[0].length;
-            if (tamanhoMatriz == tamanhoAltura2) {
-                contadorAlturaIgual2++;
-            }
-        }
-
-        if (contadorAlturaIgual < numDeFicheiros - 1 || contadorAlturaIgual2 < numDeFicheiros - 1) {
-            System.out.println("Nem todos os ficheiros têm o mesmo tamanho");
-            return false;
-        }
-        return true;
-    }
-
     //calcula o vetor média (coluna)
     private static double[] mediaColunas(double[][] matrizM) {
         int numLinhas = matrizM.length;
@@ -284,33 +385,6 @@ public class Main {
             }
         }
         return matrizC;
-    }
-
-    //efetua todas as validações necessárias da matriz
-    private static boolean validarMatriz(String ficheiroCSV) throws FileNotFoundException {
-        double[][] matriz = preencherMatriz(ficheiroCSV);
-        //verifica se a matriz é quadrada
-        if (matriz.length != matriz[0].length) {
-            System.out.println("A matriz indicada não é quadrada");
-            return false;
-        }
-
-        //verfiica se é uma matriz quadrada de índice menor ou igual que 256
-        if (matriz.length > 256) {
-            System.out.println("O programa não possui capacidade para analisar a matriz fornecida");
-            return false;
-        }
-
-        //verifica se a matriz é simétrica
-        for (int i = 0; i < matriz.length; i++) {
-            for (int j = 0; j < matriz[0].length; j++) {
-                if (matriz[i][j] != matriz[j][i]) {
-                    System.out.println("A matriz indicada não é simétrica");
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     //ajusta automáticamente os valores de k
@@ -378,6 +452,8 @@ public class Main {
 
         //obtém e imprime a matriz reconstruída
         System.out.println("Matriz reconstruída");
+        if (!canMultiplyMatrizes(Pk, Dk)) return;
+        if (!canMultiplyMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk))) return;
         double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
         mostrarMatriz(Ak);
 
@@ -525,11 +601,6 @@ public class Main {
 
     // Efetua a multiplicação de matrizes
     private static double[][] multiplicarMatrizes(double[][] a, double[][] b) {
-        // Compara o número de colunas da matriz A com o número de linhas da matriz B
-        if (a[0].length != b.length) {
-            return null;
-        }
-
         double[][] resultado = new double[a.length][b[0].length];
         // Faz a multiplicaçâo dos valores e adiciona o resultado à matriz
         for (int i = 0; i < a.length; i++) {
@@ -585,12 +656,25 @@ public class Main {
             String linha = sc.nextLine();
             String[] valores = linha.split(",");
             for (int numColuna = 0; numColuna < valores.length; numColuna++) {
-                matriz[numLinha][numColuna] = Double.parseDouble(valores[numColuna]);
+                if (!temEspacos(valores[numColuna]))
+                    matriz[numLinha][numColuna] = Double.parseDouble(valores[numColuna]);
+                else
+                    matriz[numLinha][numColuna] = tirarEspacos(valores[numColuna]);
             }
             numLinha++;
         }
         sc.close();
         return matriz;
+    }
+
+    private static double tirarEspacos(String valore) {
+        double num = 0;
+        for (int i = 0; i < valore.length(); i++) {
+            if (valore.charAt(i) != ' ') {
+                num = num * 10 + Character.getNumericValue(valore.charAt(i));
+            }
+        }
+        return num;
     }
 
     // Mostra a matriz
@@ -662,9 +746,11 @@ public class Main {
         double[] vetorMedia = mediaColunas(matrizNova);
         double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
         double[][] matrizAT = transporMatriz(matrizA);
+        if (!canMultiplyMatrizes(matrizAT, matrizA)) return;
         double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
         double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
         vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
+        if (!canMultiplyMatrizes(matrizA, vetoresPropriosAT_A)) return;
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
         vetorU = normalizarColunas(vetorU);
 
@@ -672,7 +758,9 @@ public class Main {
         k = ajustarKEmMatriz(matrizNova, k);
 
         //Cálculo do vetor omegaJ
+        if (!canSubtrairArrays(vetorImg, vetorMedia)) return;
         double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
+        if (!canMultiplyMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova))) return;
         double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
         double[] omegaNovo = criacaoDeArrayVetor(wNovo);
 
@@ -693,7 +781,9 @@ public class Main {
         for (int i = 0; i < numDeFicheiros; i++){
             double soma = 0;
             //Cálculo do vetor omegaJ
+            if (!canSubtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia)) return;
             double[] fiJ = subtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia);
+            if (!canMultiplyMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ))) return;
             double[][] wJ = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ));
             double[] omegaJ = criacaoDeArrayVetor(wJ);
 
@@ -732,7 +822,6 @@ public class Main {
         String pastaOutput = "Identificacao/" + menorNome.split("[.]")[0] + ".jpg";
         writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
     }
-
 
     private static double[] ordenarVetor(double[] omegaJ) {
         double[] aux = omegaJ;
@@ -782,15 +871,6 @@ public class Main {
         ImageIO.write(image, "jpg", outputFile);
     }
 
-    //Verificar se uma pasta está vazia
-    public static boolean isEmpty(String pasta){
-        File dir = new File(pasta);
-        if (dir.listFiles().length == 0){
-            return true;
-        }
-        return false;
-    }
-
     //Inverter um vetor
     private static double[] inverterVetor(double[] arr) {
         double[] aux = new double[arr.length];
@@ -813,14 +893,9 @@ public class Main {
 
     private static double[] subtrairArrays(double[] vetor1, double[] vetor2) {
         double[] novoVetor = new double[vetor1.length];
-        if (vetor1.length != vetor2.length){
-            System.out.println("Os vetores não têm o mesmo tamanho (Subtração de matrizes não pôde ser realizada)");
-            return null;
-        }else{
-            for (int i = 0; i < vetor1.length; i++){
-                novoVetor[i] = vetor1[i] - vetor2[i];
-            }
-            return novoVetor;
+        for (int i = 0; i < vetor1.length; i++){
+            novoVetor[i] = vetor1[i] - vetor2[i];
         }
+        return novoVetor;
     }
 }
