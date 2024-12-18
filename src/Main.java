@@ -626,12 +626,15 @@ public class Main {
 
         System.out.print("Caminho da imagem: ");
         String img = scanner.nextLine();
+        if (!validarCaminhoFicheiro(img)) return;
+        if (!validarTipoDeFicheiro(img, tipoDeFicheiro)) return;
 
         System.out.print("Nome da pasta com os ficheiros csv: ");
         String pasta = scanner.nextLine();
         if (!validarCaminhoFicheiro(pasta)) return;
+        if (isEmpty(pasta)) return;
 
-        System.out.println("Quantos eigenfaces pretende utilizar: ");
+        System.out.print("Quantos eigenfaces pretende utilizar? ");
         int k = scanner.nextInt();
 
         File diretorio = new File(pasta);
@@ -639,8 +642,6 @@ public class Main {
 
         int posicao = 0;
         int numDeFicheiros = ficheiros.length;
-
-        if (!validarTipoDeFicheiro(img, tipoDeFicheiro)) return;
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
 
@@ -658,75 +659,93 @@ public class Main {
             }
             posicao = 0;
         }
-
-        k = ajustarKEmMatriz(matrizNova, k);
-
         double[] vetorMedia = mediaColunas(matrizNova);
-
         double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
         double[][] matrizAT = transporMatriz(matrizA);
-
         double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
-        double[][] matrizC = obterMatrizC(matrizAT_A);
-
-        double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
-
-        double[] valoresPropriosC = obterValoresProprios(matrizC, vetoresPropriosC);
-
-        vetoresPropriosC = tratamentoDeVetores(vetoresPropriosC);
-
         double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
-
-        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A, vetoresPropriosAT_A);
-
         vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
-
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
         vetorU = normalizarColunas(vetorU);
 
+
+        k = ajustarKEmMatriz(matrizNova, k);
+
+        //Cálculo do vetor omegaJ
         double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
-
         double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
-
         double[] omegaNovo = criacaoDeArrayVetor(wNovo);
+
+        //Ordenar os pesos da imagem introduzida
+        omegaNovo = ordenarVetor(omegaNovo);
+        omegaNovo = inverterVetor(omegaNovo);
 
         double menor = 999999999;
         String menorNome = "";
 
-        for (int a = 0; a < omegaNovo.length; a++) {
+        for (int a = 0; a < k; a++) {
             System.out.printf("%.2f ", omegaNovo[a]);
         }
+
         System.out.println();
         System.out.println();
+
         for (int i = 0; i < numDeFicheiros; i++){
             double soma = 0;
+            //Cálculo do vetor omegaJ
             double[] fiJ = subtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia);
             double[][] wJ = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ));
             double[] omegaJ = criacaoDeArrayVetor(wJ);
 
-            for (int a = 0; a < omegaNovo.length; a++) {
+            //Ordenar os pesos de cada imagem
+            omegaJ = ordenarVetor(omegaJ);
+            omegaJ = inverterVetor(omegaJ);
+
+            //mostrar os k pesos de cada imagem
+            for (int a = 0; a < k; a++) {
                 System.out.printf("%.2f ", omegaJ[a]);
             }
             System.out.println();
-            for (int j = 0; j < omegaJ.length; j++){
+
+            //Calcular a distância euclidiana
+            for (int j = 0; j < k; j++){
                 soma += Math.pow(omegaJ[j] - omegaNovo[j], 2);
             }
             double distanciaEuclidiana = Math.sqrt(soma);
 
             System.out.printf("%.2f%n", distanciaEuclidiana);
 
+            //Verificar qual é a menor distância euclidiana
             if (distanciaEuclidiana < menor){
                 menor = distanciaEuclidiana;
                 menorNome = ficheiros[i].getName();
             }
             System.out.println();
         }
+
+        //Mostrar a menor distância euclidiana e o nome da imagem correspondente
         System.out.printf("%.2f%n", menor);
         System.out.println();
         System.out.println(pasta + "/" + menorNome);
 
+        //Transformar matriz em JPG
         String pastaOutput = "Identificacao/" + menorNome.split("[.]")[0] + ".jpg";
         writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
+    }
+
+
+    private static double[] ordenarVetor(double[] omegaJ) {
+        double[] aux = omegaJ;
+        for (int i = 0; i < aux.length - 1; i++) {
+            for (int j = i + 1; j < aux.length; j++) {
+                if (aux[i] > aux[j]) {
+                    double temp = aux[i];
+                    aux[i] = aux[j];
+                    aux[j] = temp;
+                }
+            }
+        }
+        return aux;
     }
 
     public static int[][] convertDoubleArrayToInteger(double[][] arr){
