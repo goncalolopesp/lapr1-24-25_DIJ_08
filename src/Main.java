@@ -83,8 +83,7 @@ public class Main {
     }
 
     //efetua todas as validações necessárias da matriz
-    private static boolean validarMatriz(String ficheiroCSV) throws FileNotFoundException {
-        double[][] matriz = preencherMatriz(ficheiroCSV);
+    private static boolean validarMatriz(double[][] matriz) throws FileNotFoundException {
 
         if (!isSquareMatrix(matriz)) return false;
 
@@ -128,11 +127,8 @@ public class Main {
         final int LIMITEMAXIMO = 255;
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz[0].length; j++) {
-                if (matriz[i][j] < LIMITEMINIMO || matriz[i][j] > LIMITEMAXIMO) {
-                    return false;
-                }
-                if (!((int)matriz[i][j] == matriz[i][j])){
-                    return false;
+                if (matriz[i][j] < LIMITEMINIMO || matriz[i][j] > LIMITEMAXIMO || !((int)matriz[i][j] == matriz[i][j])) {
+                    System.out.println("O ficheiro csv apresenta erros");
                 }
             }
         }
@@ -142,7 +138,7 @@ public class Main {
     //Verificar se uma string tem espaços
     private static boolean temEspacos(String valore) {
         for (int i = 0; i < valore.length(); i++) {
-            if (valore.charAt(i) == ' ') {
+            if (!Character.isDigit(valore.charAt(i))) {
                 return true;
             }
         }
@@ -210,7 +206,7 @@ public class Main {
         int k = scanner.nextInt();
 
         //verifica se a matriz e a quantidade de vetores/valores prórpios é válida
-        if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(ficheiroCSV)) {
+        if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(preencherMatriz(ficheiroCSV)) && verificarNumerosETiposDeCadaMatriz(preencherMatriz(ficheiroCSV))) {
             k = ajustarK(ficheiroCSV, k);
             decomporMatriz(ficheiroCSV, k);
         }
@@ -240,12 +236,12 @@ public class Main {
         int k = scanner.nextInt();
 
         double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
-        double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
+        if (!verificarNumerosETiposDeCadaMatriz(matriz)) return;
         double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
         for (int j = 0; j < matrizNova[0].length; j++) {
+            matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+            double[] matrizVetor = criacaoDeArrayVetor(matriz);
             for (int i = 0; i < matrizVetor.length; i++) {
-                matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
-                matrizVetor = criacaoDeArrayVetor(matriz);
                 matrizNova[i][j] = matrizVetor[posicao];
                 posicao++;
             }
@@ -650,21 +646,33 @@ public class Main {
 
         double[][] matriz = new double[numLinhas][numColunas];
         sc = new Scanner(csv);
-        int numLinha = 0;
-
+        String matrizStr = "";
         while (sc.hasNextLine()) {
-            String linha = sc.nextLine();
-            String[] valores = linha.split(",");
-            for (int numColuna = 0; numColuna < valores.length; numColuna++) {
-                if (!temEspacos(valores[numColuna]))
-                    matriz[numLinha][numColuna] = Double.parseDouble(valores[numColuna]);
-                else
-                    matriz[numLinha][numColuna] = tirarEspacos(valores[numColuna]);
+            matrizStr += "|";
+        }
+        matrizStr = cortarEspacos(matrizStr);
+
+        String[] linhas = matrizStr.split("[|]");
+        for (int i = 0; i < linhas.length; i++) {
+            String[] valores = linhas[i].split(",");
+            for (int j = 0; j < valores.length; j++) {
+                matriz[i][j] = tirarEspacos(valores[j]);
             }
-            numLinha++;
         }
         sc.close();
         return matriz;
+    }
+
+    private static String cortarEspacos(String matrizStr) {
+        // Remove espaços diretamente
+        matrizStr = matrizStr.replace(" ", "");
+
+        // Remove múltiplas vírgulas consecutivas
+        while (matrizStr.contains(",,")) {
+            matrizStr = matrizStr.replace(",,", ",");
+        }
+
+        return matrizStr;
     }
 
     private static double tirarEspacos(String valore) {
@@ -724,25 +732,22 @@ public class Main {
         File diretorio = new File(pasta);
         File[] ficheiros = diretorio.listFiles();
 
-        int posicao = 0;
         int numDeFicheiros = ficheiros.length;
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
 
         double[] vetorImg = criacaoDeArrayVetor(preencherMatriz(img));
 
-        double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
-        double[] matrizVetor = new double[(int) Math.pow(matriz.length, 2)];
-        double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
-        for (int j = 0; j < matrizNova[0].length; j++) {
+        int tamanho = (int) Math.pow(preencherMatriz((pasta + "/" + ficheiros[0].getName())).length, 2);
+        double[][] matrizNova = new double[tamanho][numDeFicheiros];
+        for (int j = 0; j < numDeFicheiros; j++) {
+            double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+            double[] matrizVetor = criacaoDeArrayVetor(matriz);
             for (int i = 0; i < matrizVetor.length; i++) {
-                matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
-                matrizVetor = criacaoDeArrayVetor(matriz);
-                matrizNova[i][j] = matrizVetor[posicao];
-                posicao++;
+                matrizNova[i][j] = matrizVetor[i];
             }
-            posicao = 0;
         }
+
         double[] vetorMedia = mediaColunas(matrizNova);
         double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
         double[][] matrizAT = transporMatriz(matrizA);
@@ -756,12 +761,18 @@ public class Main {
 
 
         k = ajustarKEmMatriz(matrizNova, k);
+        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A, vetoresPropriosAT_A);
+        vetoresPropriosAT_A = normalizarColunas(vetoresPropriosAT_A);
+        double[] valoresPropriosAT_AOrdenados = ordenarArray(valoresPropriosAT_A, vetoresPropriosAT_A);
+        double[][] vetoresPropriosAT_AOrdenadosExtraidos = extrairArray(vetoresPropriosAT_A, k);
+        double[][] matrizUFatiada = multiplicarMatrizes(matrizA, vetoresPropriosAT_AOrdenadosExtraidos);
+        matrizUFatiada = normalizarColunas(matrizUFatiada);
 
-        //Cálculo do vetor omegaJ
+        //Cálculo do vetor omegaNovo
         if (!canSubtrairArrays(vetorImg, vetorMedia)) return;
         double[] fiNova = subtrairArrays(vetorImg, vetorMedia);
-        if (!canMultiplyMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova))) return;
-        double[][] wNovo = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiNova));
+        if (!canMultiplyMatrizes(transporMatriz(matrizUFatiada), transformarVetorEmColuna(fiNova))) return;
+        double[][] wNovo = multiplicarMatrizes(transporMatriz(matrizUFatiada), transformarVetorEmColuna(fiNova));
         double[] omegaNovo = criacaoDeArrayVetor(wNovo);
 
         //Ordenar os pesos da imagem introduzida
@@ -771,6 +782,7 @@ public class Main {
         double menor = 999999999;
         String menorNome = "";
 
+        //mostrar os k pesos da imagem introduzida
         for (int a = 0; a < k; a++) {
             System.out.printf("%.2f ", omegaNovo[a]);
         }
@@ -783,8 +795,8 @@ public class Main {
             //Cálculo do vetor omegaJ
             if (!canSubtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia)) return;
             double[] fiJ = subtrairArrays(criacaoDeArrayVetor(preencherMatriz(ficheiros[i].getPath())), vetorMedia);
-            if (!canMultiplyMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ))) return;
-            double[][] wJ = multiplicarMatrizes(transporMatriz(vetorU), transformarVetorEmColuna(fiJ));
+            if (!canMultiplyMatrizes(transporMatriz(matrizUFatiada), transformarVetorEmColuna(fiJ))) return;
+            double[][] wJ = multiplicarMatrizes(transporMatriz(matrizUFatiada), transformarVetorEmColuna(fiJ));
             double[] omegaJ = criacaoDeArrayVetor(wJ);
 
             //Ordenar os pesos de cada imagem
@@ -897,5 +909,15 @@ public class Main {
             novoVetor[i] = vetor1[i] - vetor2[i];
         }
         return novoVetor;
+    }
+
+    public static double[][] extrairArray(double[][] matriz, int k) {
+        double[][] matrizExtraida = new double[matriz.length][k];
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < matriz.length; j++) {
+                matrizExtraida[j][i] = matriz[j][i];
+            }
+        }
+        return matrizExtraida;
     }
 }
