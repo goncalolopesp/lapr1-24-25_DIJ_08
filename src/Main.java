@@ -20,11 +20,13 @@ public class Main {
         return true;
     }
 
+    //Verifica se o ficheiro enviado por parâmetro é do tipo enviado
     private static boolean validarTipoDeFicheiro(String nomeDoFicheiro, String tipoDeFicheiro) {
         String[] tipoDoFicheiro = nomeDoFicheiro.split("[.]");
         return tipoDoFicheiro[tipoDoFicheiro.length - 1].equals(tipoDeFicheiro);
     }
 
+    //Verifica se o tamanho de todas as matrizes de uma pasta é igual
     public static boolean verificarTamanho(String pasta, int numDeFicheiros, File[] ficheiros) throws FileNotFoundException {
 
         int contadorAlturaIgual = 0;
@@ -52,7 +54,7 @@ public class Main {
         return true;
     }
 
-    //verifica se a matriz é quadrada
+    //verifica se uma dada matriz é quadrada
     public static boolean isSquareMatrix(double[][] matriz) {
         if (matriz.length != matriz[0].length) {
             return false;
@@ -60,7 +62,7 @@ public class Main {
         return true;
     }
 
-    //verfiica se é uma matriz quadrada de índice menor ou igual que 256
+    //verfiica se uma dada matriz quadrada tem  índice menor ou igual a 256
     public static boolean isSquareMatrixSmallerThan(double[][] matriz, int maxTamanho) {
         if (matriz.length > maxTamanho) {
             System.out.println("O tamanho da matriz é superior a 256!");
@@ -69,7 +71,7 @@ public class Main {
         return true;
     }
 
-    //verifica se a matriz é simétrica
+    //verifica se uma matriz é simétrica
     public static boolean isSquareMatrixSimetric(double[][] matriz) {
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz[0].length; j++) {
@@ -82,9 +84,8 @@ public class Main {
         return true;
     }
 
-    //efetua todas as validações necessárias da matriz
+    //efetua todas as validações necessárias de uma dada matriz
     private static boolean validarMatriz(double[][] matriz) throws FileNotFoundException {
-
         if (!isSquareMatrix(matriz)) return false;
 
         if (!isSquareMatrixSmallerThan(matriz, 256)) return false;
@@ -103,7 +104,7 @@ public class Main {
         return false;
     }
 
-    //Verificar se é possível fazer a subtração de matrizes
+    //Verificar se é possível fazer a subtração de duas matrizes
     private static boolean canSubtrairArrays(double[] vetor1, double[] vetor2) {
         if (vetor1.length != vetor2.length){
             System.out.println("Os vetores não têm o mesmo tamanho (Subtração de matrizes não pode ser realizada)");
@@ -112,7 +113,7 @@ public class Main {
         return true;
     }
 
-    //Verificar se podemos multiplicar matrizes
+    //Verificar se é possível fazer a multiplicação de duas matrizes
     private static boolean canMultiplyMatrizes(double[][] matrizA, double[][] matrizB) {
         // Compara o número de colunas da matriz A com o número de linhas da matriz B
         if (matrizA[0].length != matrizB.length) {
@@ -121,7 +122,7 @@ public class Main {
         return true;
     }
 
-    //Verificar se um número está num intervalo de valores e se o número é inteiro
+    //Verificar se todos os valores de uma matriz pertencem a um certo intervalo de valores e se existe algum valor que não inteiro.
     public static boolean verificarNumerosETiposDeCadaMatriz(double[][] matriz) {
         final int LIMITEMINIMO = 0;
         final int LIMITEMAXIMO = 255;
@@ -135,19 +136,28 @@ public class Main {
         return true;
     }
 
-    //Verificar se uma string tem espaços
-    private static boolean temEspacos(String valore) {
-        for (int i = 0; i < valore.length(); i++) {
-            if (!Character.isDigit(valore.charAt(i))) {
-                return true;
+    //TESTES UNITÁRIOS
+
+    public static boolean testarMultiplicacao(double[][] matrizA, double[][] matrizB, double[][] esperado) {
+
+        double[][] resultado = multiplicarMatrizes(matrizA, matrizB);
+
+        if (esperado.length != resultado.length || esperado[0].length != resultado[0].length) {
+            return false;
+        }
+
+        for (int i = 0; i < esperado.length; i++) {
+            for (int j = 0; j < esperado[0].length; j++) {
+                if (esperado[i][j] != resultado[i][j]) {
+                    return false;
+                }
             }
         }
-        return false;
+        return true;
     }
 
 
-
-    //Codigo
+    //FUNCIONALIDADES
     public static void main(String[] args) throws IOException {
         menu();
     }
@@ -189,12 +199,248 @@ public class Main {
                     ativo = false;
                     break;
 
+                case 5:
+                    testesUnitarios();
+                    break;
+
                 default:
                     //mensagem de erro default
                     System.out.println("Não existe essa opção");
             }
         }
         scanner.close();
+    }
+
+    private static void testesUnitarios() throws IOException {
+        double[][] matrizA = {{1, 2}, {2, 1}};
+        double[][] matrizB = {{1, 3}, {3, 1}};
+
+        //Testar Multiplicação
+        {
+            double[][] matrizC = {{7, 5}, {5, 7}};
+            if (!testarMultiplicacao(matrizA, matrizB, matrizC)) {
+                System.out.println("Multiplicação está errada!");
+                return;
+            }else{
+                System.out.println("Multiplicação: OK");
+            }
+        }
+
+        //Testar Transposição
+        {
+            double[][] matrizD = {{1, 2}, {2, 1}};
+            if (!testarTransposta(matrizA, matrizD)){
+                System.out.println("Transposição errada!");
+                return;
+            }else{
+                System.out.println("Transposição: OK");
+            }
+        }
+
+        //Testar Subtração
+        {
+            double[][] matrizE = {{0, -1}, {-1, 0}};
+            if (!testarSubtracao(matrizA, matrizB, matrizE)){
+                System.out.println("Subtração errada");
+                return;
+            }else{
+                System.out.println("Subtração: OK");
+            }
+        }
+
+        //Testar a criação de um vetor de média de colunas
+        {
+            double[] vetorMedia = {1.5, 1.5};
+            if (!testarMedia(matrizA, vetorMedia)){
+                System.out.println("Media errada");
+                return;
+            }else{
+                System.out.println("Media: OK");
+            }
+        }
+
+        //Testar ordenação de vetores
+        {
+            double[] ordenada = {1, 1, 3, 3};
+            if (!testarOrdenar(criacaoDeArrayVetor(matrizB), ordenada)){
+                System.out.println("Ordenação errada");
+                return;
+            }else{
+                System.out.println("Ordenação: OK");
+            }
+        }
+
+        //Testar a criação de uma matriz diagonal
+        {
+            double[][] matrizDiagonal = {{2,0}, {0,2}};
+            double[] vetorParaTransformarEmDiagonal = {2,2};
+            if (!testarTransformarEmDiagonal(vetorParaTransformarEmDiagonal, matrizDiagonal)){
+                System.out.println("Transformação em matriz diagonal errada");
+                return;
+            }else{
+                System.out.println("Transformação em matriz diagonal: OK");
+            }
+        }
+
+        //Testar a criação de uma matriz quadrada a partir de um array
+        {
+            double[][] matrizColuna = {{1}, {2}, {3}, {4}};
+            double[][] matrizQuadradaEsperada = {{1, 2}, {3, 4}};
+            if (!testarTransformarEmMatrizQuadrada(matrizColuna, matrizQuadradaEsperada)){
+                System.out.println("Transformação em matriz quadrada errada");
+                return;
+            }else{
+                System.out.println("Transformação em matriz quadrada: OK");
+            }
+        }
+
+        //Testar preencher matriz
+        {
+            String nomeDoFicheiroParaTestar = "inputTeste.csv";
+            double[][] matrizPreenchidaEsperada = {{1, 2}, {2, 1}};
+            if (!testarPreencherMatriz(nomeDoFicheiroParaTestar, matrizPreenchidaEsperada)){
+                System.out.println("Preenchimento da matriz errado");
+                return;
+            }else{
+                System.out.println("Preenchimento da matriz: OK");
+            }
+        }
+
+        //Testar a fatiação de uma matriz
+        {
+            double[][] matrizCompleta = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+            double[][] matrizFatia = {{1, 2}, {1, 2}};
+            int linhaInicio = 0;
+            int linhaFim = 2;
+            int colunaInicio = 0;
+            int colunaFim = 2;
+            if (!testarFatiarMatriz(matrizCompleta, linhaInicio, linhaFim, colunaInicio, colunaFim, matrizFatia)){
+                System.out.println("Fatiamento da matriz errado");
+                return;
+            }else{
+                System.out.println("Fatiamento da matriz: OK");
+            }
+        }
+
+        //Testar a fatiação de um array
+        {
+
+        }
+    }
+
+    private static boolean testarFatiarMatriz(double[][] matrizCompleta, int linhaInicio, int linhaFim, int colunaInicio, int colunaFim, double[][] matrizFatia) {
+        return true;
+    }
+
+    private static boolean testarPreencherMatriz(String nomeDoFicheiroParaTestar, double[][] matrizPreenchidaEsperada) throws IOException {
+        double[][] resultado = preencherMatriz(nomeDoFicheiroParaTestar);
+        if (resultado.length != matrizPreenchidaEsperada.length || resultado[0].length != matrizPreenchidaEsperada[0].length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            for (int j = 0; j < resultado[0].length; j++) {
+                if (resultado[i][j] != matrizPreenchidaEsperada[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarTransformarEmMatrizQuadrada(double[][] matrizColuna, double[][] matrizQuadradaEsperada) {
+        double[][] resultado = colunaParaMatrizQuadrada(matrizColuna);
+        if (resultado.length != matrizQuadradaEsperada.length || resultado[0].length != matrizQuadradaEsperada[0].length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            for (int j = 0; j < resultado[0].length; j++) {
+                if (resultado[i][j] != matrizQuadradaEsperada[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarTransformarEmDiagonal(double[] vetorParaTransformarEmDiagonal, double[][] matrizDiagonal) {
+        double[][] resultado = criarMatrizDiagonal(vetorParaTransformarEmDiagonal);
+        if (resultado.length != matrizDiagonal.length || resultado[0].length != matrizDiagonal[0].length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            for (int j = 0; j < resultado[i].length; j++) {
+                if (resultado[i][j] != matrizDiagonal[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static double[][] colunaParaMatrizQuadrada(double[][] matrizColuna){
+        double[] vetor = criacaoDeArrayVetor(matrizColuna);
+        double[][] matrizQuadrada = new double[(int)Math.sqrt(vetor.length)][(int)Math.sqrt(vetor.length)];
+        int cont = 0;
+        for (int i = 0; i < matrizQuadrada.length; i++) {
+            for (int j = 0; j < matrizQuadrada[0].length; j++) {
+                matrizQuadrada[i][j] = vetor[cont++];
+            }
+        }
+        return matrizQuadrada;
+    }
+
+    private static boolean testarOrdenar(double[] doubles, double[] ordenada) {
+        double[] resultado = ordenarVetor(doubles);
+        if (resultado.length != ordenada.length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            if (resultado[i] != ordenada[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarMedia(double[][] matrizA, double[] vetorMedia) {
+        double[] resultado = mediaColunas(matrizA);
+        if (resultado.length != vetorMedia.length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            if (resultado[i] != vetorMedia[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarSubtracao(double[][] matrizA, double[][] matrizB, double[][] matrizE) {
+        double[] resultado = subtrairArrays(criacaoDeArrayVetor(matrizA), criacaoDeArrayVetor(matrizB));
+        if (resultado.length != criacaoDeArrayVetor(matrizE).length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            if (resultado[i] != criacaoDeArrayVetor(matrizE)[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarTransposta(double[][] matrizA, double[][] esperada) {
+        double[][] resultado = transporMatriz(matrizA);
+        if (resultado.length != esperada.length || resultado[0].length != esperada[0].length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            for (int j = 0; j < resultado[0].length; j++) {
+                if (resultado[i][j] != esperada[j][i]) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public static void funcionalidade1() throws IOException {
@@ -292,6 +538,7 @@ public class Main {
         mostrarMatriz(IR);
     }
 
+
     private static double[][] reconstruirImagem(double[] vetorMedia, double[][] vetorU, double[][] matrizA, int k) {
         int linhas = vetorU.length;         // Número de pixels (linhas)
         int colunas = matrizA[0].length;    // Número de imagens (ou dimensões)
@@ -321,6 +568,7 @@ public class Main {
 
         return IR;
     }
+
 
     private static void ajustarReconstrucao(double[][] IR, double[][] matrizA, double[] vetorMedia) {
         int linhas = IR.length;
@@ -361,7 +609,7 @@ public class Main {
         return medias;
     }
 
-    //obtem a matriz phi
+    //obtem a matriz composta por vários phi's
     private static double[][] obterMatrizPhi(double[][] matrizM, double[] vetorMedia) {
         double[][] matrizA = new double[matrizM.length][matrizM[0].length];
         for (int i = 0; i < matrizM.length; i++) {
@@ -372,7 +620,7 @@ public class Main {
         return matrizA;
     }
 
-    //obtem a matriz C apartir do resultado da multiplicação de A com A^T
+    //obtem a matriz C a partir do resultado da multiplicação de A com A^T
     private static double[][] obterMatrizC(double[][] matrizAAt) {
         double[][] matrizC = new double[matrizAAt.length][matrizAAt[0].length];
         for (int i = 0; i < matrizC.length; i++) {
@@ -383,7 +631,7 @@ public class Main {
         return matrizC;
     }
 
-    //ajusta automáticamente os valores de k
+    //Ajuda o valor de k consoante a matriz de um dado ficheiro
     private static int ajustarK(String ficheiroCSV, int k) throws FileNotFoundException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
         if (k <= 0 || k > matriz.length) {
@@ -393,7 +641,7 @@ public class Main {
         return k;
     }
 
-    //ajusta automáticamente os valores de k para uma matriz
+    //Ajusta o valor de K para uma dada matriz
     public static int ajustarKEmMatriz(double[][] matriz, int k) {
         if (k <= 0 || k > matriz[0].length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
@@ -491,14 +739,14 @@ public class Main {
         System.out.println();
     }
 
-    //efetua a transposta e normaliza os vetores proprios
+    //Transpor e normalizar uma matriz
     private static double[][] tratamentoDeVetores(double[][] vetoresProprios) {
         vetoresProprios = transporMatriz(vetoresProprios);
         vetoresProprios = normalizarColunas(vetoresProprios);
         return vetoresProprios;
     }
 
-    //obtem os vetores proprios de uma matriz
+    //Obter os vetores próprios de uma dada matriz
     private static double[][] obterVetoresProprios(double[][] matriz) {
         EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
         double[][] vetoresProprios = new double[matriz.length][];
@@ -508,7 +756,7 @@ public class Main {
         return vetoresProprios;
     }
 
-    //obtem os valores prorpios de uma matriz
+    //Obter os valores próprios de uma dada matriz
     private static double[] obterValoresProprios(double[][] matriz, double[][] vetoresProprios) {
         EigenDecomposition decomposicao = new EigenDecomposition(toRealMatrix(matriz));
         double[] valoresProprios = decomposicao.getRealEigenvalues();
@@ -565,7 +813,7 @@ public class Main {
         return resultado;
     }
 
-    //
+    //Cria um array com os valores de Dk
     private static double[] fatiarArray(double[] array, int inicio, int fim) {
         double[] resultado = new double[fim - inicio];
         for (int i = inicio; i < fim; i++) {
@@ -574,7 +822,7 @@ public class Main {
         return resultado;
     }
 
-    // Cria a matriz diagonal Dk com os valores próprios
+    // Cria uma matriz diagonal a partir de um array
     private static double[][] criarMatrizDiagonal(double[] valores) {
         double[][] matrizDiagonal = new double[valores.length][valores.length];
         // Adiciona os valores próprios à matriz
@@ -627,7 +875,7 @@ public class Main {
         return ordenado;
     }
 
-    // Preenche a matriz de acordo com os dados encontrados no ficheiro csv
+    // Preenche a matriz de acordo com os dados encontrados no ficheiro csv, ignorando espaços e virgulas extra
     public static double[][] preencherMatriz(String ficheiroCSV) throws FileNotFoundException {
         File csv = new File(ficheiroCSV);
         Scanner sc = new Scanner(csv);
@@ -648,6 +896,8 @@ public class Main {
         sc = new Scanner(csv);
         String matrizStr = "";
         while (sc.hasNextLine()) {
+            String linha = sc.nextLine();
+            matrizStr += linha;
             matrizStr += "|";
         }
         matrizStr = cortarEspacos(matrizStr);
@@ -663,6 +913,7 @@ public class Main {
         return matriz;
     }
 
+    //Corta os espaços de uma String que contém as linhas de um ficheiro separadas por |
     private static String cortarEspacos(String matrizStr) {
         // Remove espaços diretamente
         matrizStr = matrizStr.replace(" ", "");
@@ -675,6 +926,7 @@ public class Main {
         return matrizStr;
     }
 
+    //Corta os espaços entre números (23 41 -> 2341)
     private static double tirarEspacos(String valore) {
         double num = 0;
         for (int i = 0; i < valore.length(); i++) {
@@ -685,7 +937,7 @@ public class Main {
         return num;
     }
 
-    // Mostra a matriz
+    // Mostra uma dada matriz
     public static void mostrarMatriz(double[][] matriz) {
         for (int i = 0; i < matriz.length; i++) {
             for (int j = 0; j < matriz[i].length; j++) {
@@ -720,6 +972,8 @@ public class Main {
         String img = scanner.nextLine();
         if (!validarCaminhoFicheiro(img)) return;
         if (!validarTipoDeFicheiro(img, tipoDeFicheiro)) return;
+        if (!isSquareMatrix(preencherMatriz(img))) return;
+        if (!verificarNumerosETiposDeCadaMatriz(preencherMatriz(img))) return;
 
         System.out.print("Nome da pasta com os ficheiros csv: ");
         String pasta = scanner.nextLine();
@@ -782,6 +1036,11 @@ public class Main {
         double menor = 999999999;
         String menorNome = "";
 
+        System.out.println();
+        System.out.println("Número de eigenfaces usados: " + k);
+        System.out.println();
+
+        System.out.println("Pesos da imagem introduzida: ");
         //mostrar os k pesos da imagem introduzida
         for (int a = 0; a < k; a++) {
             System.out.printf("%.2f ", omegaNovo[a]);
@@ -803,10 +1062,12 @@ public class Main {
             omegaJ = ordenarVetor(omegaJ);
             omegaJ = inverterVetor(omegaJ);
 
+            System.out.printf("Pesos da imagem %d:%n", i+1);
             //mostrar os k pesos de cada imagem
             for (int a = 0; a < k; a++) {
                 System.out.printf("%.2f ", omegaJ[a]);
             }
+            System.out.println();
             System.out.println();
 
             //Calcular a distância euclidiana
@@ -814,8 +1075,7 @@ public class Main {
                 soma += Math.pow(omegaJ[j] - omegaNovo[j], 2);
             }
             double distanciaEuclidiana = Math.sqrt(soma);
-
-            System.out.printf("%.2f%n", distanciaEuclidiana);
+            System.out.printf("Distância da imagem %d à imagem introduzida: %.2f%n", i+1, distanciaEuclidiana);
 
             //Verificar qual é a menor distância euclidiana
             if (distanciaEuclidiana < menor){
@@ -826,15 +1086,17 @@ public class Main {
         }
 
         //Mostrar a menor distância euclidiana e o nome da imagem correspondente
-        System.out.printf("%.2f%n", menor);
-        System.out.println();
-        System.out.println(pasta + "/" + menorNome);
+        System.out.printf("Menor distância euclidiana: %.2f%n", menor);
+        System.out.println("Caminho da imagem com menor distãncia: " + pasta + "/" + menorNome);
 
         //Transformar matriz em JPG
         String pastaOutput = "Identificacao/" + menorNome.split("[.]")[0] + ".jpg";
         writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
+        System.out.println();
+        System.out.println("Imagem transformada em JPG: " + pastaOutput);
     }
 
+    //Ordena um dado vetor por ordem crescente
     private static double[] ordenarVetor(double[] omegaJ) {
         double[] aux = omegaJ;
         for (int i = 0; i < aux.length - 1; i++) {
@@ -849,6 +1111,7 @@ public class Main {
         return aux;
     }
 
+    //Converte um array bidimensional do tipo double para o tipo inteiro
     public static int[][] convertDoubleArrayToInteger(double[][] arr){
         int[][] arrNovo = new int[arr.length][arr[0].length];
         for (int i = 0; i < arr.length; i++){
@@ -859,6 +1122,7 @@ public class Main {
         return arrNovo;
     }
 
+    //Transforma uma matriz do tipo inteiro num ficheiro JPG
     public static void writeArrayAsImage(int[][] array, String outputFilePath) throws IOException {
         int height = array.length;
         int width = array[0].length;
@@ -893,6 +1157,7 @@ public class Main {
         return aux;
     }
 
+    //Transforma uma linha em coluna (Transpor um array em uma matriz)
     public static double[][] transformarVetorEmColuna(double[] vetor){
         int colunas = 1;
         int linhas = vetor.length;
@@ -903,6 +1168,7 @@ public class Main {
         return vetorColuna;
     }
 
+    //Subtração de dois vetores
     private static double[] subtrairArrays(double[] vetor1, double[] vetor2) {
         double[] novoVetor = new double[vetor1.length];
         for (int i = 0; i < vetor1.length; i++){
@@ -911,6 +1177,7 @@ public class Main {
         return novoVetor;
     }
 
+    //Devolve as k colunas de um dado vetor
     public static double[][] extrairArray(double[][] matriz, int k) {
         double[][] matrizExtraida = new double[matriz.length][k];
         for (int i = 0; i < k; i++) {
