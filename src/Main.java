@@ -5,7 +5,9 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Main {
     //TESTES
@@ -503,89 +505,80 @@ public class Main {
 
         if (!canMultiplyMatrizes(matrizAT, matrizA)) return;
         double[][] matrizAT_A = multiplicarMatrizes(matrizAT, matrizA);
-        double[][] matrizC = obterMatrizC(matrizAT_A);
-
-        double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
-
-        double[] valoresPropriosC = obterValoresProprios(matrizC, vetoresPropriosC);
-
-        vetoresPropriosC = tratamentoDeVetores(vetoresPropriosC);
 
         double[][] vetoresPropriosAT_A = obterVetoresProprios(matrizAT_A);
+        vetoresPropriosAT_A = transporMatriz(vetoresPropriosAT_A);
 
-        double[] valoresPropriosAT_A = obterValoresProprios(matrizAT_A, vetoresPropriosAT_A);
-
-        vetoresPropriosAT_A = tratamentoDeVetores(vetoresPropriosAT_A);
-
-        if (canMultiplyMatrizes(matrizA, vetoresPropriosAT_A)) return;
+        if (!canMultiplyMatrizes(matrizA, vetoresPropriosAT_A)) return;
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
         vetorU = normalizarColunas(vetorU);
 
-        System.out.println("Vetor U:");
+        System.out.println("Matriz A:");
         mostrarMatriz(matrizA);
+        System.out.println("Vetores próprios ATA:");
+        mostrarMatriz(vetoresPropriosAT_A);
+        System.out.println("Vetor U:");
+        mostrarMatriz(vetorU);
 
         System.out.println("Vetor µ:");
         for (int i = 0; i < vetorMedia.length; i++) {
-            System.out.printf("%.1f ", vetorMedia[i]);
+            System.out.printf("%.2f ", vetorMedia[i]);
         }
         System.out.println();
-        System.out.println("Matriz de covariância:");
-        mostrarMatriz(matrizC);
         System.out.println("Número de eigenfaces:");
         System.out.println(k);
-        double[][] IR = reconstruirImagem(vetorMedia, vetorU, matrizA, k);
-        System.out.println("IR");
-        mostrarMatriz(IR);
+        processarReconstrucao(matrizA, vetorU, vetorMedia, matrizNova, k);
     }
 
 
-    private static double[][] reconstruirImagem(double[] vetorMedia, double[][] vetorU, double[][] matrizA, int k) {
-        int linhas = vetorU.length;         // Número de pixels (linhas)
-        int colunas = matrizA[0].length;    // Número de imagens (ou dimensões)
-        double[][] IR = new double[linhas][colunas]; // Matriz para a imagem reconstruída
-
-        // Calcular a transposta de vetorU
-        double[][] vetorUT = transporMatriz(vetorU);
-
-        // Calcular os pesos W = U^T * A
-        double[][] vetorW = multiplicarMatrizes(vetorUT, matrizA);
-
-        // Reconstruir a imagem
-        for (int i = 0; i < colunas; i++) {         // Para cada imagem
-            for (int x = 0; x < linhas; x++) {      // Para cada pixel
-                double soma = vetorMedia[x];        // Começa com a média do pixel
-                for (int j = 0; j < k; j++) {       // Usar os K componentes principais
-                    soma += vetorU[x][j] * vetorW[j][i]; // u_j * w_j
-                }
-                IR[x][i] = soma;                    // Reconstruir o pixel
-            }
+    public static void processarReconstrucao(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, double[][] matrizImagensOriginais, int numEigenfaces) {
+        double[][] matrizImagensReconstruidas = new double[matrizImagensOriginais.length][matrizImagensOriginais[0].length];
+        for (int i = 0; i < matrizImagensReconstruidas[0].length; i++) {
+            double[][] imagemReconstruida = reconstruirImagem(matrizA, eigenfaces, vetorMedia, i, numEigenfaces);
         }
-
-        // Ajustar possíveis erros numéricos para garantir correspondência exata quando k é máximo
-        if (k == vetorU[0].length) {
-            ajustarReconstrucao(IR, matrizA, vetorMedia);
-        }
-
-        return IR;
     }
 
+    // Reconstruir Imagens
+    public static double[][] reconstruirImagem(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, int index, int numEigenfaces) {
+        double[][] matrizImagensReconstruidas = new double[vetorMedia.length][1];
 
-    private static void ajustarReconstrucao(double[][] IR, double[][] matrizA, double[] vetorMedia) {
-        int linhas = IR.length;
-        int colunas = IR[0].length;
+        System.out.printf("Pesos utilizados da imagem %d:%n", (index+1));
 
-        for (int i = 0; i < colunas; i++) {  // Para cada imagem
-            for (int x = 0; x < linhas; x++) {  // Para cada pixel
-                // Subtraia a média para comparar a reconstrução com a matrizA original
-                double valorReconstruido = IR[x][i] - vetorMedia[x];
-                double valorOriginal = matrizA[x][i];
+        double[][] matrizSomatorio = new double[vetorMedia.length][1];
+        double[][] matrizVetorA = extrairColunaComoMatriz(matrizA, index);
 
-                // Ajuste para corrigir possíveis diferenças de ponto flutuante
-                if (Math.abs(valorReconstruido - valorOriginal) > 1e-6) {
-                    IR[x][i] = valorOriginal + vetorMedia[x];
-                }
-            }
+        for (int i = 0; i < numEigenfaces; i++) {
+            double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i);
+            double[][] matrizVetorUjT = transporMatriz(matrizVetorUj);
+
+            double[][] matrizVetorPesos = multiplicarMatrizes(matrizVetorUjT, matrizVetorA);
+
+            System.out.printf("%-8.2f|", matrizVetorPesos[0][0]);
+
         }
+        System.out.println();
+        return matrizImagensReconstruidas;
+    }
+
+    // Método para calcular o erro absoluto médio
+    private static double calcularErroAbsolutoMedio(double[][] original, double[][] reconstruida) {
+        double somaErros = 0;
+        int totalElementos = original.length;
+
+        for (int i = 0; i < totalElementos; i++) {
+            somaErros += Math.abs(original[i][0] - reconstruida[i][0]);
+        }
+
+        return somaErros / totalElementos;
+    }
+
+    // Extrai coluna de uma matriz em forma de matriz coluna
+    private static double[][] extrairColunaComoMatriz(double[][] matriz, int coluna) {
+        double[][] resultado = new double[matriz.length][1];
+        for (int i = 0; i < matriz.length; i++) {
+            resultado[i][0] = matriz[i][coluna];
+        }
+        return resultado;
     }
 
     //calcula o vetor média (coluna)
@@ -647,7 +640,7 @@ public class Main {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
             k = matriz[0].length;
         }
-        return k;
+        return k-1;
     }
 
     //decomposição da matriz
