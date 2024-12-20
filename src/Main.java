@@ -535,13 +535,19 @@ public class Main {
         double[][] matrizImagensReconstruidas = new double[matrizImagensOriginais.length][matrizImagensOriginais[0].length];
         for (int i = 0; i < matrizImagensReconstruidas[0].length; i++) {
             double[][] imagemReconstruida = reconstruirImagem(matrizA, eigenfaces, vetorMedia, i, numEigenfaces);
+
+            for (int j = 0; j < matrizImagensReconstruidas.length; j++) {
+                matrizImagensReconstruidas[j][i] = imagemReconstruida[j][0];
+            }
+
+            double[][] imagemOriginal = extrairColunaComoMatriz(matrizImagensOriginais, i);
+            double EAM = calcularErroAbsolutoMedio(imagemReconstruida, imagemOriginal);
+            System.out.printf("Erro Absoluto Médio: %.2f%n", EAM);
         }
     }
 
     // Reconstruir Imagens
     public static double[][] reconstruirImagem(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, int index, int numEigenfaces) {
-        double[][] matrizImagensReconstruidas = new double[vetorMedia.length][1];
-
         System.out.printf("Pesos utilizados da imagem %d:%n", (index+1));
 
         double[][] matrizSomatorio = new double[vetorMedia.length][1];
@@ -555,8 +561,18 @@ public class Main {
 
             System.out.printf("%-8.2f|", matrizVetorPesos[0][0]);
 
+            double[][] matrizVetorUjWj = multiplicarMatrizes(matrizVetorUj, matrizVetorPesos);
+            for (int j = 0; j < matrizVetorUjWj.length; j++) {
+                matrizSomatorio[j][0] += matrizVetorUjWj[j][0];
+            }
         }
         System.out.println();
+
+        double[][] matrizImagensReconstruidas = new double[vetorMedia.length][1];
+        for (int i = 0; i < vetorMedia.length; i++) {
+            matrizImagensReconstruidas[i][0] = vetorMedia[i] + matrizSomatorio[i][0];
+        }
+
         return matrizImagensReconstruidas;
     }
 
