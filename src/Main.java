@@ -5,9 +5,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Arrays;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class Main {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,6 +287,7 @@ public class Main {
         System.out.println();
         System.out.println("Imagem transformada em JPG: " + pastaOutput);
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // PROCESSAMENTO
     // Preenche a matriz de acordo com os dados encontrados no ficheiro csv, ignorando espaços e virgulas extra
@@ -386,7 +385,8 @@ public class Main {
         System.out.printf("%.2f %n", erro);
 
         String diretorioFicheiro = "Output";
-        outputParaFicheiro(ficheiroCSV, Ak, diretorioFicheiro);
+        String nomeReconstruido = "_reconstruída.csv";
+        outputParaFicheiro(ficheiroCSV, Ak, diretorioFicheiro, nomeReconstruido);
     }
 
     //Obter os vetores próprios de uma dada matriz
@@ -492,6 +492,7 @@ public class Main {
         return somaErros / totalElementos;
     }
 
+    // Método  onde se realiza todo o processamento da reconstrução de uma imagem
     public static void processarReconstrucao(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, double[][] matrizImagensOriginais, int numEigenfaces, File[] ficheiros) throws IOException {
         double[][] matrizImagensReconstruidas = new double[matrizImagensOriginais.length][matrizImagensOriginais[0].length];
         for (int i = 0; i < matrizImagensReconstruidas[0].length; i++) {
@@ -507,7 +508,39 @@ public class Main {
             System.out.printf("Erro Absoluto Médio: %.2f%n", EAM);
 
             String diretorioFicheiro = "Eigenfaces";
-            outputParaFicheiro(ficheiros[i].getName(), imagemReconstruidaAux, diretorioFicheiro);
+            String nomeReconstruido = "_reconstruida.csv";
+            outputParaFicheiro(ficheiros[i].getName(), imagemReconstruidaAux, diretorioFicheiro, nomeReconstruido);
+
+            if (verificarValoresNumIntervalo(imagemReconstruidaAux)) {
+                normalizarMatriz(imagemReconstruidaAux);
+                nomeReconstruido = "_reconstruida_transformada.csv";
+                outputParaFicheiro(ficheiros[i].getName(), imagemReconstruidaAux, diretorioFicheiro, nomeReconstruido);
+            }
+
+            diretorioFicheiro = "ImagensReconstruídas/" + ficheiros[i].getName().split("[.]")[0] + ".jpg";
+            writeArrayAsImage(convertDoubleArrayToInteger(imagemReconstruidaAux), diretorioFicheiro);
+        }
+    }
+
+    // Normaliza a matriz caso esta possua valores fora do intervalo [0, 255]
+    public static void normalizarMatriz(double[][] imagemReconstruidaAux) {
+        final int MAX = 255;
+        double maximo = imagemReconstruidaAux[0][0];
+        double minimo = imagemReconstruidaAux[0][0];
+        for (int i = 0; i < imagemReconstruidaAux.length; i++) {
+            for (int j = 0; j < imagemReconstruidaAux[0].length; j++) {
+                if (imagemReconstruidaAux[i][j] > maximo) {
+                    maximo = imagemReconstruidaAux[i][j];
+                } else if (imagemReconstruidaAux[i][j] < minimo) {
+                    minimo = imagemReconstruidaAux[i][j];
+                }
+            }
+        }
+
+        for (int i = 0; i < imagemReconstruidaAux.length; i++) {
+            for (int j = 0; j < imagemReconstruidaAux[0].length; j++) {
+                imagemReconstruidaAux[i][j] = MAX * ((imagemReconstruidaAux[i][j] - minimo) / (maximo - minimo));
+            }
         }
     }
 
@@ -518,8 +551,8 @@ public class Main {
         double[][] matrizSomatorio = new double[vetorMedia.length][1];
         double[][] matrizVetorA = extrairColunaComoMatriz(matrizA, index);
 
-        for (int i = 0; i < numEigenfaces; i++) {
-            double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i);
+        for (int i = 1; i < numEigenfaces; i++) {
+            double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i - 1);
             double[][] matrizVetorUjT = transporMatriz(matrizVetorUj);
 
             double[][] matrizVetorPesos = multiplicarMatrizes(matrizVetorUjT, matrizVetorA);
@@ -541,6 +574,7 @@ public class Main {
         return imagemReconstruida;
     }
 
+    // Transforma uma matriz coluna numa matriz quadrada
     public static double[][] colunaParaMatrizQuadrada(double[][] matrizColuna) {
         double[] vetor = criacaoDeArrayVetor(matrizColuna);
         double[][] matrizQuadrada = new double[(int) Math.sqrt(vetor.length)][(int) Math.sqrt(vetor.length)];
@@ -717,7 +751,7 @@ public class Main {
     private static double[] inverterVetor(double[] arr) {
         double[] aux = new double[arr.length];
         int cont = 0;
-        for (int i = arr.length - 1; i > 0; i--) {
+        for (int i = arr.length - 1; i >= 0; i--) {
             aux[cont++] = arr[i];
         }
         return aux;
@@ -764,13 +798,13 @@ public class Main {
         }
     }
 
-    private static void outputParaFicheiro(String nomeFicheiro, double[][] imagemReconstruida, String diretorioFicheiro) throws IOException {
+    private static void outputParaFicheiro(String nomeFicheiro, double[][] imagemReconstruida, String diretorioFicheiro, String nomeReconstruido) throws IOException {
         //obtém o valor do caminho do ficheiro csv
         File ficheiro = new File(nomeFicheiro);
         String nomeSemCsv = ficheiro.getName().replaceFirst("[.][^.]+$", "");
 
         //define o caminho de saída do ficheiro
-        String nomeArquivo = diretorioFicheiro + "/" + nomeSemCsv + "_reconstruida.csv";
+        String nomeArquivo = diretorioFicheiro + "/" + nomeSemCsv + nomeReconstruido;
         File arquivoSaida = new File(nomeArquivo);
 
         //cria o arquivo de escrita, caso o mesmo não exista
@@ -783,7 +817,7 @@ public class Main {
 
         for (int j = 0; j < imagemReconstruida.length; j++) {
             for (int l = 0; l < imagemReconstruida[j].length; l++) {
-                printWriter.print(imagemReconstruida[j][l]);
+                printWriter.printf("%.0f", imagemReconstruida[j][l]);
                 if (l < imagemReconstruida[j].length - 1) {
                     printWriter.print(",");
                 }
@@ -794,9 +828,10 @@ public class Main {
         System.out.println("Matriz reconstruída guardada na pasta '" + diretorioFicheiro + "' com o nome '" + nomeArquivo + "'");
         System.out.println();
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // VERIFICACOES
-    //Ajuda o valor de k consoante a matriz de um dado ficheiro
+// VERIFICACOES
+//Ajuda o valor de k consoante a matriz de um dado ficheiro
     private static int ajustarK(String ficheiroCSV, int k) throws FileNotFoundException {
         double[][] matriz = preencherMatriz(ficheiroCSV);
         if (k <= 0 || k > matriz.length) {
@@ -808,11 +843,11 @@ public class Main {
 
     //Ajusta o valor de K para uma dada matriz
     public static int ajustarKEmMatriz(double[][] matriz, int k) {
-        if (k <= 0 || k > matriz[0].length) {
+        if (k <= 1 || k > matriz[0].length) {
             System.out.println("AVISO: quantidade de valores/vetores próprios ajustada para a quantidade máxima");
             k = matriz[0].length;
         }
-        return k - 1;
+        return k;
     }
 
     //valida se o caminho fornecido existe
@@ -940,8 +975,21 @@ public class Main {
         }
         return true;
     }
+
+    // Verifica se a matriz possui valores fora do intervalo [0, 255]
+    public static boolean verificarValoresNumIntervalo(double[][] imagemReconstruida) {
+        for (int i = 0; i < imagemReconstruida.length; i++) {
+            for (int j = 0; j < imagemReconstruida[0].length; j++) {
+                if (imagemReconstruida[i][j] > 255 || imagemReconstruida[i][j] < 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // TESTES UNITARIOS
+// TESTES UNITARIOS
     private static void testesUnitarios() throws IOException {
         double[][] matrizA = {{1, 2}, {2, 1}};
         double[][] matrizB = {{1, 3}, {3, 1}};
@@ -1179,5 +1227,5 @@ public class Main {
         }
         return true;
     }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
