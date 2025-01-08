@@ -27,9 +27,10 @@ public class Main {
             System.out.println("  1. Decompor Matriz                  ");
             System.out.println("  2. Reconstruir Imagens              ");
             System.out.println("  3. Obter Imagem Semelhante          ");
-            System.out.println("  4. Sair                           ");
+            System.out.println("  4. Gerar Nova Imagem                ");
+            System.out.println("  5. Sair                           ");
             System.out.println("****************************************");
-            System.out.print("Escolha uma opção (1-4): ");
+            System.out.print("Escolha uma opção (1-5): ");
 
             int opcao = scanner.nextInt();
             scanner.nextLine();
@@ -51,11 +52,16 @@ public class Main {
                     break;
 
                 case 4:
+                    // executa a funcionalidade 4
+                    funcionalidade4();
+                    break;
+
+                case 5:
                     //termina o código
                     ativo = false;
                     break;
 
-                case 5:
+                case 6:
                     // executa os testes unitarios
                     testesUnitarios();
                     break;
@@ -255,7 +261,7 @@ public class Main {
             omegaJ = inverterVetor(omegaJ);
 
             System.out.printf("Pesos da imagem %d:%n", i + 1);
-            //mostrar os k pesos de cada imagem
+            //Mostrar os k pesos de cada imagem
             for (int a = 0; a < k; a++) {
                 System.out.printf("%.2f ", omegaJ[a]);
             }
@@ -286,6 +292,105 @@ public class Main {
         writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
         System.out.println();
         System.out.println("Imagem transformada em JPG: " + pastaOutput);
+    }
+
+    // Funcionalidade 4
+    public static void funcionalidade4() throws IOException {
+        String tipoDeFicheiro = "csv";
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Nome da pasta com os ficheiros csv: ");
+        String pasta = scanner.nextLine();
+        if (!validarCaminhoFicheiro(pasta)) return;
+
+        File diretorio = new File(pasta);
+        File[] ficheiros = diretorio.listFiles();
+
+        int posicao = 0;
+        int numDeFicheiros = ficheiros.length;
+
+        for (int i = 0; i < numDeFicheiros; i++) {
+            if (!validarTipoDeFicheiro(ficheiros[i].getName(), tipoDeFicheiro)) return;
+        }
+
+        if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
+
+        System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
+        int k = scanner.nextInt();
+
+        double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
+        if (!verificarNumerosETiposDeCadaMatriz(matriz)) return;
+        double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
+        for (int j = 0; j < matrizNova[0].length; j++) {
+            matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+            double[] matrizVetor = criacaoDeArrayVetor(matriz);
+            for (int i = 0; i < matrizVetor.length; i++) {
+                matrizNova[i][j] = matrizVetor[posicao];
+                posicao++;
+            }
+            posicao = 0;
+        }
+
+        k = ajustarKEmMatriz(matrizNova, k);
+
+        double[] vetorMedia = mediaColunas(matrizNova);
+
+        double[][] matrizA = obterMatrizPhi(matrizNova, vetorMedia);
+        double[][] matrizAT = transporMatriz(matrizA);
+
+        double[][] matrizC = multiplicarMatrizes(matrizA, matrizAT);
+        for (int i = 0; i < matrizC.length; i++) {
+            for (int j = 0; j < matrizC[0].length; j++) {
+                matrizC[i][j] /= numDeFicheiros;
+            }
+        }
+        double[][] vetoresPropriosC = obterVetoresProprios(matrizC);
+        double[] valoresPropriosC = obterValoresProprios(matrizC, vetoresPropriosC);
+        ordenarArray(valoresPropriosC, vetoresPropriosC);
+
+        double[][] somatorio = new double[vetoresPropriosC.length][1];
+
+        for (int i = 1; i < k; i++) {
+            double Wi = obterValorRandom(valoresPropriosC[i-1]);
+            double[][] Ei = extrairColuna(vetoresPropriosC, i-1);
+            for (int j = 0; j < Ei.length; j++) {
+                somatorio[j][0] += Wi * Ei[j][0];
+            }
+        }
+        for (int i = 0; i < somatorio.length; i++) {
+            somatorio[i][0] += vetorMedia[i];
+        }
+
+        somatorio = colunaParaMatrizQuadrada(somatorio);
+
+        String diretorioFicheiro = "Gerada";
+        String nomeReconstruido = "_gerada.csv";
+        outputParaFicheiro("imagem", somatorio, diretorioFicheiro, nomeReconstruido);
+
+        if (verificarValoresNumIntervalo(somatorio)) {
+            normalizarMatriz(somatorio);
+            nomeReconstruido = "_gerada_transformada.csv";
+            outputParaFicheiro("imagem", somatorio, diretorioFicheiro, nomeReconstruido);
+        }
+
+        diretorioFicheiro = "Gerada/imagem_gerada.jpg";
+        writeArrayAsImage(convertDoubleArrayToInteger(somatorio), diretorioFicheiro);
+    }
+
+    // Extrai uma coluna específica de uma matriz
+    public static double[][] extrairColuna(double[][] matriz, int col) {
+        double[][] coluna = new double[matriz.length][1];
+        for (int j = 0; j < matriz.length; j++) {
+            coluna[j][0] = matriz[j][col];
+        }
+        return coluna;
+    }
+
+    // Devolve um valor aleatório num dado intervalo
+    public static double obterValorRandom(double valoresProprio) {
+        double max = Math.sqrt(valoresProprio);
+        double min = -Math.sqrt(valoresProprio);
+        return (Math.random() * (max - min + 1)) + min;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
