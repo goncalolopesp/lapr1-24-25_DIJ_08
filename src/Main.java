@@ -11,6 +11,7 @@ public class Main {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //FUNCIONALIDADES
     public static void main(String[] args) throws IOException {
+        testesUnitarios();
         menu();
     }
 
@@ -1105,64 +1106,52 @@ public class Main {
             if (!testarMultiplicacao(matrizA, matrizB, matrizC)) {
                 System.out.println("Multiplicação está errada!");
                 return;
-            } else {
-                System.out.println("Multiplicação: OK");
             }
         }
 
         //Testar Transposição
         {
             double[][] matrizD = {{1, 2}, {2, 1}};
-            if (!testarTransposta(matrizA, matrizD)) {
+            if (!testarTransposta(matrizA, matrizD)){
                 System.out.println("Transposição errada!");
                 return;
-            } else {
-                System.out.println("Transposição: OK");
             }
         }
 
         //Testar Subtração
         {
             double[][] matrizE = {{0, -1}, {-1, 0}};
-            if (!testarSubtracao(matrizA, matrizB, matrizE)) {
+            if (!testarSubtracao(matrizA, matrizB, matrizE)){
                 System.out.println("Subtração errada");
                 return;
-            } else {
-                System.out.println("Subtração: OK");
             }
         }
 
         //Testar a criação de um vetor de média de colunas
         {
             double[] vetorMedia = {1.5, 1.5};
-            if (!testarMedia(matrizA, vetorMedia)) {
+            if (!testarMedia(matrizA, vetorMedia)){
                 System.out.println("Media errada");
                 return;
-            } else {
-                System.out.println("Media: OK");
             }
         }
 
         //Testar ordenação de vetores
         {
             double[] ordenada = {1, 1, 3, 3};
-            if (!testarOrdenar(criacaoDeArrayVetor(matrizB), ordenada)) {
+            if (!testarOrdenar(criacaoDeArrayVetor(matrizB), ordenada)){
                 System.out.println("Ordenação errada");
                 return;
-            } else {
-                System.out.println("Ordenação: OK");
             }
         }
 
         //Testar a criação de uma matriz diagonal
         {
-            double[][] matrizDiagonal = {{2, 0}, {0, 2}};
-            double[] vetorParaTransformarEmDiagonal = {2, 2};
-            if (!testarTransformarEmDiagonal(vetorParaTransformarEmDiagonal, matrizDiagonal)) {
+            double[][] matrizDiagonal = {{2,0}, {0,2}};
+            double[] vetorParaTransformarEmDiagonal = {2,2};
+            if (!testarTransformarEmDiagonal(vetorParaTransformarEmDiagonal, matrizDiagonal)){
                 System.out.println("Transformação em matriz diagonal errada");
                 return;
-            } else {
-                System.out.println("Transformação em matriz diagonal: OK");
             }
         }
 
@@ -1170,11 +1159,9 @@ public class Main {
         {
             double[][] matrizColuna = {{1}, {2}, {3}, {4}};
             double[][] matrizQuadradaEsperada = {{1, 2}, {3, 4}};
-            if (!testarTransformarEmMatrizQuadrada(matrizColuna, matrizQuadradaEsperada)) {
+            if (!testarTransformarEmMatrizQuadrada(matrizColuna, matrizQuadradaEsperada)){
                 System.out.println("Transformação em matriz quadrada errada");
                 return;
-            } else {
-                System.out.println("Transformação em matriz quadrada: OK");
             }
         }
 
@@ -1182,11 +1169,9 @@ public class Main {
         {
             String nomeDoFicheiroParaTestar = "inputTeste.csv";
             double[][] matrizPreenchidaEsperada = {{1, 2}, {2, 1}};
-            if (!testarPreencherMatriz(nomeDoFicheiroParaTestar, matrizPreenchidaEsperada)) {
+            if (!testarPreencherMatriz(nomeDoFicheiroParaTestar, matrizPreenchidaEsperada)){
                 System.out.println("Preenchimento da matriz errado");
                 return;
-            } else {
-                System.out.println("Preenchimento da matriz: OK");
             }
         }
 
@@ -1198,21 +1183,366 @@ public class Main {
             int linhaFim = 2;
             int colunaInicio = 0;
             int colunaFim = 2;
-            if (!testarFatiarMatriz(matrizCompleta, linhaInicio, linhaFim, colunaInicio, colunaFim, matrizFatia)) {
+            if (!testarFatiarMatriz(matrizCompleta, linhaInicio, linhaFim, colunaInicio, colunaFim, matrizFatia)){
                 System.out.println("Fatiamento da matriz errado");
                 return;
-            } else {
-                System.out.println("Fatiamento da matriz: OK");
             }
         }
 
         //Testar a fatiação de um array
         {
+            double[] vetorCompleto = {1, 2, 3, 4};
+            double[] vetorFatia = {1, 2};
+            int inicio = 0;
+            int fim = 2;
+            if (!testarFatiarArray(vetorCompleto, inicio, fim, vetorFatia)){
+                System.out.println("Fatiamento do array errado");
+                return;
+            }
+        }
+
+        //Testar a validação do tipo de ficheiro
+        {
+            String nome = "testeUnit.csv";
+            String tipo = "csv";
+            boolean expected = true;
+            if (testarValidarTipoDeFicheiro(nome, tipo) != expected) {
+                System.out.println("Erro na validação do tipo de ficheiro");
+                return;
+            }
+        }
+
+        //Testar a verificação se uma pasta está vazia
+        {
+            String nomeDaPasta = "testeUnitario";
+            boolean expected = true;
+            if (testarisEmpty(nomeDaPasta) != expected) {
+                System.out.println("Erro a verificar se a pasta está vazia");
+                return;
+            }
+        }
+
+        //Testar a verificação do caminho do ficheiro
+        {
+            String caminhoParaOFicheiro = "Identificacao/image_011.jpg";
+            boolean expected = true;
+            if (testarValidarCaminhoParaFicheiro(caminhoParaOFicheiro) != expected) {
+                System.out.println("Erro na verificação do caminho de um ficheiro");
+                return;
+            }
+        }
+
+        //Testar a transformação de vetor em matriz coluna
+        {
+            double[] vetor = {1, 2, 3};
+            double[][] esperado = {{1}, {2}, {3}};
+            if (!testarTransformarVetorEmMatrizColuna(vetor, esperado)){
+                System.out.println("Erro na transformação de um vetor em uma matriz coluna");
+                return;
+            }
+        }
+
+        //Testar o método de tirar espaços na String de um número
+        {
+            String fichCsv = "8    8";
+            double esperado = 88;
+            if (!testarTirarEspacos(fichCsv, esperado)){
+                System.out.println("Erro a tirar os espaços");
+                return;
+            }
+        }
+
+        //Testar o método de cortar espaços num ficheiro em forma de String
+        {
+            String fichCSV = "8   8,  ,,,  121 | 3,,,,,,,,,,,, 5";
+            String esperado = "88,121|3,5";
+            if (!testarCortarEspacos(fichCSV, esperado)){
+                System.out.println("Erro ao cortar espaços");
+                return;
+            }
+        }
+
+        //Testar a verificação do tamanho das matrizes dos ficheiros de uma pasta
+        {
+            String pasta = "input";
+            if (!testarVerificarTamanho(pasta)){
+                System.out.println("Os ficheiros da dada pasta não têm o mesmo tamanho");
+                return;
+            }
+        }
+
+        //Testar a criação da matriz Phi
+        {
+            double[][] arr = {{3, 3}, {3, 3}};
+            double[] med = {1, 1};
+            double[][] expected = {{2, 2}, {2, 2}};
+            if (!testarObterMatrizPhi(arr, med, expected)){
+                System.out.println("Erro na criação da matriz Phi");
+                return;
+            }
+        }
+
+        //Testar a inversão de um vetor
+        {
+            double[] vet = {1, 2, 3, 4};
+            double[] expected = {4, 3, 2, 1};
+            if (!testarInversaoVetor(vet, expected)){
+                System.out.println("Erro ao inverter vetor");
+                return;
+            }
+        }
+
+        //Testar a conversão de uma matriz double para uma matriz inteira
+        {
+            double[][] arr = {{1.7, 2.4}, {1.5, 4.6}};
+            int[][] expected = {{1, 2}, {1, 4}};
+            if (!testarConversao(arr, expected)){
+                System.out.println("Erro na conversão de double para int");
+                return;
+            }
+        }
+
+        //Testar a extração de matrizes
+        {
+            double[][] arr = {{1,2,3},{4,5,6},{7,8,9}};
+            double[][] expected = {{1,2},{4,5}, {7, 8}};
+            if (!testarExtracao(arr, 2, expected)){
+                System.out.println("Erro na extração da matriz");
+                return;
+            }
+        }
+
+        //Testar as verificações
+        {
+            double[][] matriz = {{1,2}, {2,1}};
+            if (!testarValidacaoMatriz(matriz)){
+                System.out.println("Erro na validação das matrizes");
+                return;
+            }
+        }
+
+        //Testar o método ordenarArray
+        {
+            double[] arr = {5, 4, 2, 6};
+            double[][] matriz = {{3, 5, 6, 1}, {6, 3, 6, 2}, {1, 2, 3, 4}, {8, 5, 4, 6}};
+            double[] expectedArray = {6, 5, 4, 2};
+            double[][] expectedMatriz = {{8, 5, 4, 6}, {3, 5, 6, 1}, {6, 3, 6, 2}, {1, 2, 3, 4}};
+
+            if (!testarOrdenarArray(arr, matriz, expectedArray, expectedMatriz)){
+                System.out.println("Erro no método ordenarArray");
+                return;
+            }
 
         }
+
+        System.out.println("Testes unitários sem problemas");
+    }
+
+    public static boolean testarMultiplicacao(double[][] matrizA, double[][] matrizB, double[][] esperado) {
+
+        double[][] resultado = multiplicarMatrizes(matrizA, matrizB);
+
+        if (esperado.length != resultado.length || esperado[0].length != resultado[0].length) {
+            return false;
+        }
+
+        for (int i = 0; i < esperado.length; i++) {
+            for (int j = 0; j < esperado[0].length; j++) {
+                if (esperado[i][j] != resultado[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarOrdenarArray(double[] arr, double[][] matriz, double[] expectedArray, double[][] expectedMatriz) {
+        double[] resultado = ordenarArray(arr, matriz);
+        if (matriz.length != expectedMatriz.length || matriz[0].length != expectedMatriz[0].length){
+            return false;
+        }
+
+        for (int i = 0; i < matriz.length; i++){
+            for (int j = 0; j < matriz[i].length; j++){
+                if (matriz[i][j] != expectedMatriz[i][j]){
+                    return false;
+                }
+            }
+        }
+
+        if (resultado.length != expectedArray.length){
+            return false;
+        }
+
+        for (int i = 0; i < resultado.length; i++){
+            if (resultado[i] != expectedArray[i]){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean testarValidacaoMatriz(double[][] matriz) throws FileNotFoundException {
+        if (!validarMatriz(matriz)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarExtracao(double[][] arr, int k, double[][] expected) {
+
+        double[][] result = extrairArray(arr, k);
+        if (result.length != expected.length || result[0].length != expected[0].length){
+            return false;
+        }
+
+        for (int i = 0; i < result.length; i++){
+            for (int j = 0; j < result[i].length; j++){
+                if (result[i][j] != expected[i][j]){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean testarConversao(double[][] arr, int[][] expected) {
+        int[][] result = convertDoubleArrayToInteger(arr);
+        if (result.length != expected.length || result[0].length != expected[0].length){
+            return false;
+        }
+        for (int i = 0; i < result.length; i++){
+            for (int j = 0; j < result[i].length; j++){
+                if (result[i][j] != expected[i][j]){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarInversaoVetor(double[] vet, double[] expected) {
+        double[] result = inverterVetor(vet);
+        if (result.length != expected.length){
+            return false;
+        }
+
+        for (int i = 0; i < result.length; i++){
+            if (result[i] != expected[i]){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean testarObterMatrizPhi(double[][] arr, double[] med, double[][] expected) {
+        double[][] result = obterMatrizPhi(arr, med);
+        if (result.length != expected.length || result[0].length != expected[0].length){
+            return false;
+        }
+
+        for (int i = 0; i < result.length; i++){
+            for (int j = 0; j < result[i].length; j++){
+                if (result[i][j] != expected[i][j]){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean testarVerificarTamanho(String pasta) throws FileNotFoundException {
+        File dir = new File(pasta);
+        File[] ficheiros = dir.listFiles();
+        if (!verificarTamanho(pasta, ficheiros.length, ficheiros)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarCortarEspacos(String fichCSV, String esperado) {
+        if (!(cortarEspacos(fichCSV).equals(esperado))){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarTirarEspacos(String fichCsv, double esperado) {
+        if (!(tirarEspacos(fichCsv) == esperado)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarTransformarVetorEmMatrizColuna(double[] vetor, double[][] esperado) {
+
+        double[][] resultado = transformarVetorEmColuna(vetor);
+
+        if (esperado.length != resultado.length || resultado[0].length != esperado[0].length){
+            return false;
+        }
+
+        for (int i = 0; i < resultado.length; i++){
+            for (int j = 0; j < resultado[i].length; j++){
+                if (resultado[i][j] != esperado[i][j]){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }
+
+    private static boolean testarValidarCaminhoParaFicheiro(String caminhoParaOFicheiro) {
+        if (!validarCaminhoFicheiro(caminhoParaOFicheiro)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarisEmpty(String nomeDaPasta) {
+        if (isEmpty(nomeDaPasta)){
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean testarValidarTipoDeFicheiro(String nome, String tipo) {
+        if (!validarTipoDeFicheiro(nome, tipo)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean testarFatiarArray(double[] vetorCompleto, int inicio, int fim, double[] vetorFatia) {
+        double[] resultado = fatiarArray(vetorCompleto, inicio, fim);
+        if (resultado.length != vetorFatia.length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            if (resultado[i] != vetorFatia[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean testarFatiarMatriz(double[][] matrizCompleta, int linhaInicio, int linhaFim, int colunaInicio, int colunaFim, double[][] matrizFatia) {
+        double[][] resultado = fatiarMatriz(matrizCompleta, linhaInicio, linhaFim, colunaInicio, colunaFim);
+        if (resultado.length != matrizFatia.length || resultado[0].length != matrizFatia[0].length) {
+            return false;
+        }
+        for (int i = 0; i < resultado.length; i++) {
+            for (int j = 0; j < resultado[0].length; j++) {
+                if (resultado[i][j] != matrizFatia[i][j]) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -1308,24 +1638,6 @@ public class Main {
         for (int i = 0; i < resultado.length; i++) {
             for (int j = 0; j < resultado[0].length; j++) {
                 if (resultado[i][j] != esperada[j][i]) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    public static boolean testarMultiplicacao(double[][] matrizA, double[][] matrizB, double[][] esperado) {
-
-        double[][] resultado = multiplicarMatrizes(matrizA, matrizB);
-
-        if (esperado.length != resultado.length || esperado[0].length != resultado[0].length) {
-            return false;
-        }
-
-        for (int i = 0; i < esperado.length; i++) {
-            for (int j = 0; j < esperado[0].length; j++) {
-                if (esperado[i][j] != resultado[i][j]) {
                     return false;
                 }
             }
