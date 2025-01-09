@@ -5,21 +5,144 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Scanner;
 
 public class Main {
+    // Menu
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //FUNCIONALIDADES
     public static void main(String[] args) throws IOException {
-        testesUnitarios();
-        menu();
-    }
+        if (!testesUnitarios()){
+            return;
+        }
+        int func = 0;
+        String inputFich = "";
+        int k = 0;
+        String baseImagens = "";
+        String outputFile = "";
+        boolean flag1 = false, flag2 = false, flag3 = false, flag4 = false, flag5 = false;
+        if (args.length == 0) {
+            menu();
+        } else {
+            for (int i = 0; i < args.length; i+=2){
+                if (args[i].equals("-f")){
+                    if (i + 1 <= args.length){
+                        func = Integer.valueOf(args[i + 1]);
+                        flag1 = true;
+                    }
+                }else if (args[i].equals("-k")){
+                    if (i + 1 <= args.length){
+                        inputFich = args[i + 1];
+                        flag2 = true;
+                    }
+                }else if (args[i].equals("-i")){
+                    if (i + 1 <= args.length){
+                        k = Integer.valueOf(args[i + 1]);
+                        flag3 = true;
+                    }
+                }else if (args[i].equals("-d")) {
+                    if (i + 1 <= args.length){
+                        baseImagens = args[i + 1];
+                        flag4 = true;
+                    }
+                }else{
+                    if (i + 1 == args.length){
+                        outputFile = args[i];
+                        flag5 = true;
+                    }
+                }
+            }
 
-    // Menu
+            if (!flag5){
+                System.out.println("Ficheiro de output não indicado");
+                return;
+            }
+
+            if (!validarTipoDeFicheiro(outputFile, "txt")){
+                System.out.println("Ficheiro de output não é do tipo txt. Ficheiro vai ser guardado com tipo txt");
+                outputFile += ".txt";
+            }
+
+            if (!flag1){
+                System.out.println("Não foi escolhida nenhuma funcionalidade");
+                return;
+            }
+
+            switch (func){
+                case 1:
+                    if (flag2){
+                        if (flag3){
+                            funcionalidade1(inputFich, k, 1, outputFile);
+                        }else{
+                            System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
+                            return;
+                        }
+                    }else{
+                        System.out.println("Falta de input: Ficheiro. Flag: -k");
+                        break;
+                    }
+                    break;
+                case 2:
+                    if (flag3){
+                        if (flag4){
+                            funcionalidade2(baseImagens, k, 1, outputFile);
+                        }else{
+                            System.out.println("Falta de input: Base de imagens. Flag: -d");
+                            break;
+                        }
+                    }else{
+                        System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
+                        break;
+                    }
+                    break;
+                case 3:
+                    if (flag2){
+                        if (flag3){
+                            if (flag4){
+                                funcionalidade3(inputFich, baseImagens, k, 1, outputFile);
+                            }else{
+                                System.out.println("Falta de input: Base de imagens. Flag: -d");
+                                break;
+                            }
+                        }else{
+                            System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
+                            break;
+                        }
+                    }else{
+                        System.out.println("Falta de input: Ficheiro. Flag: -k");
+                        break;
+                    }
+                    break;
+                case 4:
+                    if (flag3){
+                        if (flag4){
+                            funcionalidade4(baseImagens, k);
+                        }else{
+                            System.out.println("Falta de input: Base de imagens. Flag: -d");
+                            break;
+                        }
+                    }else{
+                        System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
+                        break;
+                    }
+
+                    break;
+                default:
+                    System.out.println("Erro");
+            }
+
+        }
+
+    }
     public static void menu() throws IOException {
         Scanner scanner = new Scanner(System.in);
         // variável booleana para manter o menu ativo até o utilizador usar a opção sair
         boolean ativo = true;
+
+        final String OUTPUT_FILE = "output.txt";
 
         while (ativo) {
             System.out.println("****************************************");
@@ -39,22 +162,41 @@ public class Main {
             switch (opcao) {
                 case 1:
                     // executa a funcionalidade 1
-                    funcionalidade1();
+                    System.out.print("Indica o caminho do ficheiro CSV: ");
+                    String ficheiroCSV = scanner.nextLine();
+
+                    System.out.print("Digita a quantidade de valores/vetores próprios a usar: ");
+                    int k = scanner.nextInt();
+                    funcionalidade1(ficheiroCSV, k, 0, OUTPUT_FILE);
                     break;
 
                 case 2:
                     // executa a funcionalidade 2
-                    funcionalidade2();
+                    System.out.print("Nome da pasta com os ficheiros csv: ");
+                    String pasta = scanner.nextLine();
+                    System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
+                    int k1 = scanner.nextInt();
+                    funcionalidade2(pasta, k1, 0, OUTPUT_FILE);
                     break;
 
                 case 3:
                     // executa a funcionalidade 3
-                    funcionalidade3();
+                    System.out.print("Caminho da imagem: ");
+                    String img = scanner.nextLine();
+                    System.out.print("Nome da pasta com os ficheiros csv: ");
+                    String pasta1 = scanner.nextLine();
+                    System.out.print("Quantos eigenfaces pretende utilizar? ");
+                    int k2 = scanner.nextInt();
+                    funcionalidade3(img, pasta1, k2, 0, OUTPUT_FILE);
                     break;
 
                 case 4:
                     // executa a funcionalidade 4
-                    funcionalidade4();
+                    System.out.print("Nome da pasta com os ficheiros csv: ");
+                    String pasta2 = scanner.nextLine();
+                    System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
+                    int k3 = scanner.nextInt();
+                    funcionalidade4(pasta2, k3);
                     break;
 
                 case 5:
@@ -76,32 +218,23 @@ public class Main {
     }
 
     // Funcionalidade 1
-    public static void funcionalidade1() throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Indica o caminho do ficheiro CSV: ");
-        String ficheiroCSV = scanner.nextLine();
-
-        System.out.print("Digita a quantidade de valores/vetores próprios a usar: ");
-        int k = scanner.nextInt();
-
+    public static void funcionalidade1(String ficheiroCSV, int k, int modo, String outputFile) throws IOException {
         //verifica se a matriz e a quantidade de vetores/valores prórpios é válida
         if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(preencherMatriz(ficheiroCSV)) && verificarNumerosETiposDeCadaMatriz(preencherMatriz(ficheiroCSV))) {
             k = ajustarK(ficheiroCSV, k);
-            decomporMatriz(ficheiroCSV, k);
+            decomporMatriz(ficheiroCSV, k, modo, outputFile);
         }
     }
 
     // Funcionalidade 2
-    public static void funcionalidade2() throws IOException {
-        String tipoDeFicheiro = "csv";
-        Scanner scanner = new Scanner(System.in);
+    public static void funcionalidade2(String pasta, int k, int modo, String outputFile) throws IOException {
+        PrintWriter out = new PrintWriter(outputFile);
 
-        System.out.print("Nome da pasta com os ficheiros csv: ");
-        String pasta = scanner.nextLine();
-        if (!validarCaminhoFicheiro(pasta)) return;
+        String tipoDeFicheiro = "csv";
 
         File diretorio = new File(pasta);
         File[] ficheiros = diretorio.listFiles();
+        if (!validarCaminhoFicheiro(pasta)) return;
 
         int posicao = 0;
         int numDeFicheiros = ficheiros.length;
@@ -111,9 +244,6 @@ public class Main {
         }
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
-
-        System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
-        int k = scanner.nextInt();
 
         double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
         if (!verificarNumerosETiposDeCadaMatriz(matriz)) return;
@@ -145,42 +275,55 @@ public class Main {
         double[][] vetorU = multiplicarMatrizes(matrizA, vetoresPropriosAT_A);
         vetorU = normalizarColunas(vetorU);
 
-        System.out.println("Matriz A:");
-        mostrarMatriz(matrizA);
-        System.out.println("Vetores próprios ATA:");
-        mostrarMatriz(vetoresPropriosAT_A);
-        System.out.println("Vetor U:");
-        mostrarMatriz(vetorU);
+        if (modo == 0){
+            System.out.println("Matriz A:");
+            mostrarMatriz(matrizA);
+            System.out.println("Vetores próprios ATA:");
+            mostrarMatriz(vetoresPropriosAT_A);
+            System.out.println("Vetor U:");
+            mostrarMatriz(vetorU);
 
-        System.out.println("Vetor µ:");
-        for (int i = 0; i < vetorMedia.length; i++) {
-            System.out.printf("%.2f ", vetorMedia[i]);
+            System.out.println("Vetor µ:");
+            for (int i = 0; i < vetorMedia.length; i++) {
+                System.out.printf("%.2f ", vetorMedia[i]);
+            }
+            System.out.println();
+            System.out.println("Número de eigenfaces:");
+            System.out.println(k);
+        }else{
+            out.println("Matriz A:");
+            mostrarMatrizFicheiro(matrizA, out);
+            out.println("Vetores próprios ATA:");
+            mostrarMatrizFicheiro(vetoresPropriosAT_A, out);
+            out.println("Vetor U:");
+            mostrarMatrizFicheiro(vetorU, out);
+
+            out.println("Vetor µ:");
+            for (int i = 0; i < vetorMedia.length; i++) {
+                out.printf("%.2f ", vetorMedia[i]);
+            }
+            out.println();
+            out.println("Número de eigenfaces:");
+            out.println(k);
         }
-        System.out.println();
-        System.out.println("Número de eigenfaces:");
-        System.out.println(k);
-        processarReconstrucao(matrizA, vetorU, vetorMedia, matrizNova, k, ficheiros);
+
+        processarReconstrucao(matrizA, vetorU, vetorMedia, matrizNova, k, ficheiros, 1, out);
+        out.close();
     }
 
     // Funcionalidade 3
-    public static void funcionalidade3() throws IOException {
+    public static void funcionalidade3(String img, String pasta, int k, int modo, String outputFile) throws IOException {
+        PrintWriter out = new PrintWriter(outputFile);
         String tipoDeFicheiro = "csv";
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Caminho da imagem: ");
-        String img = scanner.nextLine();
         if (!validarCaminhoFicheiro(img)) return;
         if (!validarTipoDeFicheiro(img, tipoDeFicheiro)) return;
         if (!isSquareMatrix(preencherMatriz(img))) return;
         if (!verificarNumerosETiposDeCadaMatriz(preencherMatriz(img))) return;
 
-        System.out.print("Nome da pasta com os ficheiros csv: ");
-        String pasta = scanner.nextLine();
         if (!validarCaminhoFicheiro(pasta)) return;
         if (isEmpty(pasta)) return;
 
-        System.out.print("Quantos eigenfaces pretende utilizar? ");
-        int k = scanner.nextInt();
 
         File diretorio = new File(pasta);
         File[] ficheiros = diretorio.listFiles();
@@ -235,18 +378,34 @@ public class Main {
         double menor = 999999999;
         String menorNome = "";
 
-        System.out.println();
-        System.out.println("Número de eigenfaces usados: " + k);
-        System.out.println();
+        if (modo == 0){
+            System.out.println();
+            System.out.println("Número de eigenfaces usados: " + k);
+            System.out.println();
 
-        System.out.println("Pesos da imagem introduzida: ");
-        //mostrar os k pesos da imagem introduzida
-        for (int a = 0; a < k; a++) {
-            System.out.printf("%.2f ", omegaNovo[a]);
+            System.out.println("Pesos da imagem introduzida: ");
+            //mostrar os k pesos da imagem introduzida
+            for (int a = 0; a < k; a++) {
+                System.out.printf("%.2f ", omegaNovo[a]);
+            }
+
+            System.out.println();
+            System.out.println();
+        }else{
+            out.println();
+            out.println("Número de eigenfaces usados: " + k);
+            out.println();
+
+            out.println("Pesos da imagem introduzida: ");
+            //mostrar os k pesos da imagem introduzida
+            for (int a = 0; a < k; a++) {
+                out.printf("%.2f ", omegaNovo[a]);
+            }
+
+            out.println();
+            out.println();
         }
 
-        System.out.println();
-        System.out.println();
 
         for (int i = 0; i < numDeFicheiros; i++) {
             double soma = 0;
@@ -261,47 +420,70 @@ public class Main {
             omegaJ = ordenarVetor(omegaJ);
             omegaJ = inverterVetor(omegaJ);
 
-            System.out.printf("Pesos da imagem %d:%n", i + 1);
-            //Mostrar os k pesos de cada imagem
-            for (int a = 0; a < k; a++) {
-                System.out.printf("%.2f ", omegaJ[a]);
+            if (modo == 0){
+                System.out.printf("Pesos da imagem %d:%n", i + 1);
+                //Mostrar os k pesos de cada imagem
+                for (int a = 0; a < k; a++) {
+                    System.out.printf("%.2f ", omegaJ[a]);
+                }
+                System.out.println();
+                System.out.println();
+            }else{
+                out.printf("Pesos da imagem %d:%n", i + 1);
+                //Mostrar os k pesos de cada imagem
+                for (int a = 0; a < k; a++) {
+                    out.printf("%.2f ", omegaJ[a]);
+                }
+                out.println();
+                out.println();
             }
-            System.out.println();
-            System.out.println();
 
             //Calcular a distância euclidiana
             for (int j = 0; j < k; j++) {
                 soma += Math.pow(omegaJ[j] - omegaNovo[j], 2);
             }
             double distanciaEuclidiana = Math.sqrt(soma);
-            System.out.printf("Distância da imagem %d à imagem introduzida: %.2f%n", i + 1, distanciaEuclidiana);
+            if (modo == 0){
+                System.out.printf("Distância da imagem %d à imagem introduzida: %.2f%n", i + 1, distanciaEuclidiana);
+            }else{
+                out.printf("Distância da imagem %d à imagem introduzida: %.2f%n", i + 1, distanciaEuclidiana);
+            }
+
 
             //Verificar qual é a menor distância euclidiana
             if (distanciaEuclidiana < menor) {
                 menor = distanciaEuclidiana;
                 menorNome = ficheiros[i].getName();
             }
-            System.out.println();
+            if (modo == 0){
+                System.out.println();
+            }else{
+                out.println();
+            }
+
         }
 
-        //Mostrar a menor distância euclidiana e o nome da imagem correspondente
-        System.out.printf("Menor distância euclidiana: %.2f%n", menor);
-        System.out.println("Caminho da imagem com menor distãncia: " + pasta + "/" + menorNome);
+        if (modo == 0){
+            //Mostrar a menor distância euclidiana e o nome da imagem correspondente
+            System.out.printf("Menor distância euclidiana: %.2f%n", menor);
+            System.out.println("Caminho da imagem com menor distância: " + pasta + "/" + menorNome);
+        }else{
+            //Mostrar a menor distância euclidiana e o nome da imagem correspondente
+            out.printf("Menor distância euclidiana: %.2f%n", menor);
+            out.println("Caminho da imagem com menor distância: " + pasta + "/" + menorNome);
 
+        }
         //Transformar matriz em JPG
         String pastaOutput = "Identificacao/" + menorNome.split("[.]")[0] + ".jpg";
         writeArrayAsImage(convertDoubleArrayToInteger(preencherMatriz(pasta + "/" + menorNome)), pastaOutput);
         System.out.println();
         System.out.println("Imagem transformada em JPG: " + pastaOutput);
+        out.close();
     }
 
     // Funcionalidade 4
-    public static void funcionalidade4() throws IOException {
+    public static void funcionalidade4(String pasta, int k) throws IOException {
         String tipoDeFicheiro = "csv";
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.print("Nome da pasta com os ficheiros csv: ");
-        String pasta = scanner.nextLine();
         if (!validarCaminhoFicheiro(pasta)) return;
 
         File diretorio = new File(pasta);
@@ -316,8 +498,6 @@ public class Main {
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
 
-        System.out.print("Quantas eigenfaces devem ser usadas para reconstrução? ");
-        int k = scanner.nextInt();
 
         double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
         if (!verificarNumerosETiposDeCadaMatriz(matriz)) return;
@@ -364,7 +544,7 @@ public class Main {
 
         somatorio = colunaParaMatrizQuadrada(somatorio);
 
-        String diretorioFicheiro = "Gerada";
+        String diretorioFicheiro = "Output";
         String nomeReconstruido = "_gerada.csv";
         outputParaFicheiro("imagem", somatorio, diretorioFicheiro, nomeReconstruido);
 
@@ -374,7 +554,7 @@ public class Main {
             outputParaFicheiro("imagem", somatorio, diretorioFicheiro, nomeReconstruido);
         }
 
-        diretorioFicheiro = "Gerada/imagem_gerada.jpg";
+        diretorioFicheiro += "/imagem_gerada.jpg";
         writeArrayAsImage(convertDoubleArrayToInteger(somatorio), diretorioFicheiro);
     }
 
@@ -435,7 +615,9 @@ public class Main {
     }
 
     // Decomposição da matriz
-    private static void decomporMatriz(String ficheiroCSV, int k) throws IOException {
+    private static void decomporMatriz(String ficheiroCSV, int k, int modo, String outputFile) throws IOException {
+        PrintWriter out = new PrintWriter(outputFile);
+
         double[][] matriz = preencherMatriz(ficheiroCSV);
 
         double[][] vetoresProprios = obterVetoresProprios(matriz);
@@ -444,55 +626,110 @@ public class Main {
 
         vetoresProprios = tratamentoDeVetores(vetoresProprios);
 
-
-        System.out.println();
-        System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n", k);
-
-        System.out.println();
-
-
-        //imprime todos os valores próprios usados na decomposição
-        System.out.println("Valores próprios usados:");
-        for (int i = 0; i < k; i++) {
-            System.out.printf("Valor próprio %d: %.2f%n", i + 1, valoresProprios[i]);
-        }
-
-        System.out.println();
-
-        //imprime todos os vetores próprios usados na decomposição
-        System.out.println("Vetores próprios usados:");
-        for (int i = 0; i < k; i++) {
-            System.out.print("Vetor próprio " + (i + 1) + ": ");
-            for (int j = 0; j < vetoresProprios.length; j++) {
-                System.out.printf("%.2f ", vetoresProprios[j][i]);
-            }
+        if (modo == 0){
             System.out.println();
+            System.out.printf("Quantidade de Valores/Vetores próprios usados: %d %n", k);
+
+            System.out.println();
+
+
+            //imprime todos os valores próprios usados na decomposição
+            System.out.println("Valores próprios usados:");
+            for (int i = 0; i < k; i++) {
+                System.out.printf("Valor próprio %d: %.2f%n", i + 1, valoresProprios[i]);
+            }
+
+            System.out.println();
+
+            //imprime todos os vetores próprios usados na decomposição
+            System.out.println("Vetores próprios usados:");
+            for (int i = 0; i < k; i++) {
+                System.out.print("Vetor próprio " + (i + 1) + ": ");
+                for (int j = 0; j < vetoresProprios.length; j++) {
+                    System.out.printf("%.2f ", vetoresProprios[j][i]);
+                }
+                System.out.println();
+            }
+        }else{
+            out.println();
+            out.printf("Quantidade de Valores/Vetores próprios usados: %d %n", k);
+
+            out.println();
+
+
+            //imprime todos os valores próprios usados na decomposição
+            out.println("Valores próprios usados:");
+            for (int i = 0; i < k; i++) {
+                out.printf("Valor próprio %d: %.2f%n", i + 1, valoresProprios[i]);
+            }
+
+            out.println();
+
+            //imprime todos os vetores próprios usados na decomposição
+            out.println("Vetores próprios usados:");
+            for (int i = 0; i < k; i++) {
+                out.print("Vetor próprio " + (i + 1) + ": ");
+                for (int j = 0; j < vetoresProprios.length; j++) {
+                    out.printf("%.2f ", vetoresProprios[j][i]);
+                }
+                out.println();
+            }
         }
+
 
         //cria a matriz Pk com os vetores próprios como colunas
         //cria a matriz diagonal Dk com os valores próprios
         double[][] Pk = fatiarMatriz(vetoresProprios, 0, vetoresProprios.length, 0, k);
         double[][] Dk = criarMatrizDiagonal(fatiarArray(valoresProprios, 0, k));
 
-        System.out.println();
+        if (modo == 0){
+            //obtém e imprime a matriz reconstruída
+            System.out.println("Matriz reconstruída");
+            if (!canMultiplyMatrizes(Pk, Dk)) return;
+            if (!canMultiplyMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk))) return;
+            double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
+            mostrarMatriz(Ak);
 
-        //obtém e imprime a matriz reconstruída
-        System.out.println("Matriz reconstruída");
-        if (!canMultiplyMatrizes(Pk, Dk)) return;
-        if (!canMultiplyMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk))) return;
-        double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
-        mostrarMatriz(Ak);
+            System.out.println();
 
-        System.out.println();
+            //obtém e imprime o Erro Absoluto Médio
+            double erro = calcularErroAbsolutoMedio(matriz, Ak);
+            System.out.println("Erro Absoluto Médio");
+            System.out.printf("%.2f %n", erro);
+            String diretorioFicheiro = "Output";
+            String nomeReconstruido = "_reconstruída.csv";
+            outputParaFicheiro(ficheiroCSV, Ak, diretorioFicheiro, nomeReconstruido);
+            System.out.println();
+        }else{
 
-        //obtém e imprime o Erro Absoluto Médio
-        double erro = calcularErroAbsolutoMedio(matriz, Ak);
-        System.out.println("Erro Absoluto Médio");
-        System.out.printf("%.2f %n", erro);
+            //obtém e imprime a matriz reconstruída
+            out.println("Matriz reconstruída");
+            if (!canMultiplyMatrizes(Pk, Dk)) return;
+            if (!canMultiplyMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk))) return;
+            double[][] Ak = multiplicarMatrizes(multiplicarMatrizes(Pk, Dk), transporMatriz(Pk));
+            mostrarMatrizFicheiro(Ak, out);
 
-        String diretorioFicheiro = "Output";
-        String nomeReconstruido = "_reconstruída.csv";
-        outputParaFicheiro(ficheiroCSV, Ak, diretorioFicheiro, nomeReconstruido);
+            out.println();
+
+            //obtém e imprime o Erro Absoluto Médio
+            double erro = calcularErroAbsolutoMedio(matriz, Ak);
+            out.println("Erro Absoluto Médio");
+            out.printf("%.2f %n", erro);
+            String diretorioFicheiro = "Output";
+            String nomeReconstruido = "_reconstruída.csv";
+            outputParaFicheiro(ficheiroCSV, Ak, diretorioFicheiro, nomeReconstruido);
+            out.println();
+        }
+        out.close();
+    }
+
+    private static void mostrarMatrizFicheiro(double[][] matriz, PrintWriter out) throws FileNotFoundException {
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[i].length; j++) {
+                out.printf("%.2f ", matriz[i][j]);
+            }
+            out.println();
+        }
     }
 
     //Obter os vetores próprios de uma dada matriz
@@ -599,10 +836,10 @@ public class Main {
     }
 
     // Método  onde se realiza todo o processamento da reconstrução de uma imagem
-    public static void processarReconstrucao(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, double[][] matrizImagensOriginais, int numEigenfaces, File[] ficheiros) throws IOException {
+    public static void processarReconstrucao(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, double[][] matrizImagensOriginais, int numEigenfaces, File[] ficheiros, int modo, PrintWriter out) throws IOException {
         double[][] matrizImagensReconstruidas = new double[matrizImagensOriginais.length][matrizImagensOriginais[0].length];
         for (int i = 0; i < matrizImagensReconstruidas[0].length; i++) {
-            double[][] imagemReconstruida = reconstruirImagem(matrizA, eigenfaces, vetorMedia, i, numEigenfaces);
+            double[][] imagemReconstruida = reconstruirImagem(matrizA, eigenfaces, vetorMedia, i, numEigenfaces, modo, out);
             double[][] imagemReconstruidaAux = colunaParaMatrizQuadrada(imagemReconstruida);
 
             for (int j = 0; j < matrizImagensReconstruidas.length; j++) {
@@ -611,7 +848,12 @@ public class Main {
 
             double[][] imagemOriginal = extrairColunaComoMatriz(matrizImagensOriginais, i);
             double EAM = calcularErroAbsolutoMedio(imagemReconstruida, imagemOriginal);
-            System.out.printf("Erro Absoluto Médio: %.2f%n", EAM);
+
+            if (modo == 0){
+                System.out.printf("Erro Absoluto Médio: %.2f%n", EAM);
+            }else{
+                out.printf("Erro Absoluto Médio: %.2f%n", EAM);
+            }
 
             String diretorioFicheiro = "Eigenfaces";
             String nomeReconstruido = "_reconstruida.csv";
@@ -651,33 +893,61 @@ public class Main {
     }
 
     // Reconstruir Imagens
-    public static double[][] reconstruirImagem(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, int index, int numEigenfaces) {
-        System.out.printf("Pesos utilizados da imagem %d:%n", (index + 1));
+    public static double[][] reconstruirImagem(double[][] matrizA, double[][] eigenfaces, double[] vetorMedia, int index, int numEigenfaces, int modo, PrintWriter out) {
+        if (modo == 0){
+            System.out.printf("Pesos utilizados da imagem %d:%n", (index + 1));
 
-        double[][] matrizSomatorio = new double[vetorMedia.length][1];
-        double[][] matrizVetorA = extrairColunaComoMatriz(matrizA, index);
+            double[][] matrizSomatorio = new double[vetorMedia.length][1];
+            double[][] matrizVetorA = extrairColunaComoMatriz(matrizA, index);
 
-        for (int i = 1; i < numEigenfaces; i++) {
-            double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i - 1);
-            double[][] matrizVetorUjT = transporMatriz(matrizVetorUj);
+            for (int i = 1; i < numEigenfaces; i++) {
+                double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i - 1);
+                double[][] matrizVetorUjT = transporMatriz(matrizVetorUj);
 
-            double[][] matrizVetorPesos = multiplicarMatrizes(matrizVetorUjT, matrizVetorA);
+                double[][] matrizVetorPesos = multiplicarMatrizes(matrizVetorUjT, matrizVetorA);
 
-            System.out.printf("%-8.2f|", matrizVetorPesos[0][0]);
+                System.out.printf("%-8.2f|", matrizVetorPesos[0][0]);
 
-            double[][] matrizVetorUjWj = multiplicarMatrizes(matrizVetorUj, matrizVetorPesos);
-            for (int j = 0; j < matrizVetorUjWj.length; j++) {
-                matrizSomatorio[j][0] += matrizVetorUjWj[j][0];
+                double[][] matrizVetorUjWj = multiplicarMatrizes(matrizVetorUj, matrizVetorPesos);
+                for (int j = 0; j < matrizVetorUjWj.length; j++) {
+                    matrizSomatorio[j][0] += matrizVetorUjWj[j][0];
+                }
             }
-        }
-        System.out.println();
+            System.out.println();
+            double[][] imagemReconstruida = new double[vetorMedia.length][1];
+            for (int i = 0; i < vetorMedia.length; i++) {
+                imagemReconstruida[i][0] = vetorMedia[i] + matrizSomatorio[i][0];
+            }
 
-        double[][] imagemReconstruida = new double[vetorMedia.length][1];
-        for (int i = 0; i < vetorMedia.length; i++) {
-            imagemReconstruida[i][0] = vetorMedia[i] + matrizSomatorio[i][0];
+            return imagemReconstruida;
+        }else{
+            out.printf("Pesos utilizados da imagem %d:%n", (index + 1));
+
+            double[][] matrizSomatorio = new double[vetorMedia.length][1];
+            double[][] matrizVetorA = extrairColunaComoMatriz(matrizA, index);
+
+            for (int i = 1; i < numEigenfaces; i++) {
+                double[][] matrizVetorUj = extrairColunaComoMatriz(eigenfaces, i - 1);
+                double[][] matrizVetorUjT = transporMatriz(matrizVetorUj);
+
+                double[][] matrizVetorPesos = multiplicarMatrizes(matrizVetorUjT, matrizVetorA);
+
+                out.printf("%-8.2f|", matrizVetorPesos[0][0]);
+
+                double[][] matrizVetorUjWj = multiplicarMatrizes(matrizVetorUj, matrizVetorPesos);
+                for (int j = 0; j < matrizVetorUjWj.length; j++) {
+                    matrizSomatorio[j][0] += matrizVetorUjWj[j][0];
+                }
+            }
+            out.println();
+            double[][] imagemReconstruida = new double[vetorMedia.length][1];
+            for (int i = 0; i < vetorMedia.length; i++) {
+                imagemReconstruida[i][0] = vetorMedia[i] + matrizSomatorio[i][0];
+            }
+
+            return imagemReconstruida;
         }
 
-        return imagemReconstruida;
     }
 
     // Transforma uma matriz coluna numa matriz quadrada
@@ -1042,11 +1312,18 @@ public class Main {
     }
 
     //Verificar se uma pasta está vazia
-    public static boolean isEmpty(String pasta) {
+    public static boolean isEmpty(String pasta) throws IOException {
         File dir = new File(pasta);
-        if (dir.listFiles().length == 0) {
-            return true;
+        File[] ficheiros = dir.listFiles();
+        if (!dir.exists()){
+            Files.createDirectories(Path.of(pasta));
         }
+        if (ficheiros != null){
+            if (ficheiros.length == 0){
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -1096,7 +1373,7 @@ public class Main {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TESTES UNITARIOS
-    private static void testesUnitarios() throws IOException {
+    private static boolean testesUnitarios() throws IOException {
         double[][] matrizA = {{1, 2}, {2, 1}};
         double[][] matrizB = {{1, 3}, {3, 1}};
 
@@ -1105,7 +1382,7 @@ public class Main {
             double[][] matrizC = {{7, 5}, {5, 7}};
             if (!testarMultiplicacao(matrizA, matrizB, matrizC)) {
                 System.out.println("Multiplicação está errada!");
-                return;
+                return false;
             }
         }
 
@@ -1114,7 +1391,7 @@ public class Main {
             double[][] matrizD = {{1, 2}, {2, 1}};
             if (!testarTransposta(matrizA, matrizD)){
                 System.out.println("Transposição errada!");
-                return;
+                return false;
             }
         }
 
@@ -1123,7 +1400,7 @@ public class Main {
             double[][] matrizE = {{0, -1}, {-1, 0}};
             if (!testarSubtracao(matrizA, matrizB, matrizE)){
                 System.out.println("Subtração errada");
-                return;
+                return false;
             }
         }
 
@@ -1132,7 +1409,7 @@ public class Main {
             double[] vetorMedia = {1.5, 1.5};
             if (!testarMedia(matrizA, vetorMedia)){
                 System.out.println("Media errada");
-                return;
+                return false;
             }
         }
 
@@ -1141,7 +1418,7 @@ public class Main {
             double[] ordenada = {1, 1, 3, 3};
             if (!testarOrdenar(criacaoDeArrayVetor(matrizB), ordenada)){
                 System.out.println("Ordenação errada");
-                return;
+                return false;
             }
         }
 
@@ -1151,7 +1428,7 @@ public class Main {
             double[] vetorParaTransformarEmDiagonal = {2,2};
             if (!testarTransformarEmDiagonal(vetorParaTransformarEmDiagonal, matrizDiagonal)){
                 System.out.println("Transformação em matriz diagonal errada");
-                return;
+                return false;
             }
         }
 
@@ -1161,7 +1438,7 @@ public class Main {
             double[][] matrizQuadradaEsperada = {{1, 2}, {3, 4}};
             if (!testarTransformarEmMatrizQuadrada(matrizColuna, matrizQuadradaEsperada)){
                 System.out.println("Transformação em matriz quadrada errada");
-                return;
+                return false;
             }
         }
 
@@ -1171,7 +1448,7 @@ public class Main {
             double[][] matrizPreenchidaEsperada = {{1, 2}, {2, 1}};
             if (!testarPreencherMatriz(nomeDoFicheiroParaTestar, matrizPreenchidaEsperada)){
                 System.out.println("Preenchimento da matriz errado");
-                return;
+                return false;
             }
         }
 
@@ -1185,7 +1462,7 @@ public class Main {
             int colunaFim = 2;
             if (!testarFatiarMatriz(matrizCompleta, linhaInicio, linhaFim, colunaInicio, colunaFim, matrizFatia)){
                 System.out.println("Fatiamento da matriz errado");
-                return;
+                return false;
             }
         }
 
@@ -1197,7 +1474,7 @@ public class Main {
             int fim = 2;
             if (!testarFatiarArray(vetorCompleto, inicio, fim, vetorFatia)){
                 System.out.println("Fatiamento do array errado");
-                return;
+                return false;
             }
         }
 
@@ -1208,9 +1485,10 @@ public class Main {
             boolean expected = true;
             if (testarValidarTipoDeFicheiro(nome, tipo) != expected) {
                 System.out.println("Erro na validação do tipo de ficheiro");
-                return;
+                return false;
             }
         }
+
 
         //Testar a verificação se uma pasta está vazia
         {
@@ -1218,17 +1496,18 @@ public class Main {
             boolean expected = true;
             if (testarisEmpty(nomeDaPasta) != expected) {
                 System.out.println("Erro a verificar se a pasta está vazia");
-                return;
+                return false;
             }
         }
 
+
         //Testar a verificação do caminho do ficheiro
         {
-            String caminhoParaOFicheiro = "Identificacao/image_011.jpg";
+            String caminhoParaOFicheiro = "inputTeste.csv";
             boolean expected = true;
             if (testarValidarCaminhoParaFicheiro(caminhoParaOFicheiro) != expected) {
                 System.out.println("Erro na verificação do caminho de um ficheiro");
-                return;
+                return false;
             }
         }
 
@@ -1238,7 +1517,7 @@ public class Main {
             double[][] esperado = {{1}, {2}, {3}};
             if (!testarTransformarVetorEmMatrizColuna(vetor, esperado)){
                 System.out.println("Erro na transformação de um vetor em uma matriz coluna");
-                return;
+                return false;
             }
         }
 
@@ -1248,7 +1527,7 @@ public class Main {
             double esperado = 88;
             if (!testarTirarEspacos(fichCsv, esperado)){
                 System.out.println("Erro a tirar os espaços");
-                return;
+                return false;
             }
         }
 
@@ -1258,7 +1537,7 @@ public class Main {
             String esperado = "88,121|3,5";
             if (!testarCortarEspacos(fichCSV, esperado)){
                 System.out.println("Erro ao cortar espaços");
-                return;
+                return false;
             }
         }
 
@@ -1267,7 +1546,7 @@ public class Main {
             String pasta = "input";
             if (!testarVerificarTamanho(pasta)){
                 System.out.println("Os ficheiros da dada pasta não têm o mesmo tamanho");
-                return;
+                return false;
             }
         }
 
@@ -1278,7 +1557,7 @@ public class Main {
             double[][] expected = {{2, 2}, {2, 2}};
             if (!testarObterMatrizPhi(arr, med, expected)){
                 System.out.println("Erro na criação da matriz Phi");
-                return;
+                return false;
             }
         }
 
@@ -1288,7 +1567,7 @@ public class Main {
             double[] expected = {4, 3, 2, 1};
             if (!testarInversaoVetor(vet, expected)){
                 System.out.println("Erro ao inverter vetor");
-                return;
+                return false;
             }
         }
 
@@ -1298,7 +1577,7 @@ public class Main {
             int[][] expected = {{1, 2}, {1, 4}};
             if (!testarConversao(arr, expected)){
                 System.out.println("Erro na conversão de double para int");
-                return;
+                return false;
             }
         }
 
@@ -1308,7 +1587,7 @@ public class Main {
             double[][] expected = {{1,2},{4,5}, {7, 8}};
             if (!testarExtracao(arr, 2, expected)){
                 System.out.println("Erro na extração da matriz");
-                return;
+                return false;
             }
         }
 
@@ -1317,7 +1596,7 @@ public class Main {
             double[][] matriz = {{1,2}, {2,1}};
             if (!testarValidacaoMatriz(matriz)){
                 System.out.println("Erro na validação das matrizes");
-                return;
+                return false;
             }
         }
 
@@ -1330,12 +1609,14 @@ public class Main {
 
             if (!testarOrdenarArray(arr, matriz, expectedArray, expectedMatriz)){
                 System.out.println("Erro no método ordenarArray");
-                return;
+                return false;
             }
 
         }
 
         System.out.println("Testes unitários sem problemas");
+
+        return true;
     }
 
     public static boolean testarMultiplicacao(double[][] matrizA, double[][] matrizB, double[][] esperado) {
@@ -1504,7 +1785,7 @@ public class Main {
         return true;
     }
 
-    private static boolean testarisEmpty(String nomeDaPasta) {
+    private static boolean testarisEmpty(String nomeDaPasta) throws IOException {
         if (isEmpty(nomeDaPasta)){
             return true;
         }
