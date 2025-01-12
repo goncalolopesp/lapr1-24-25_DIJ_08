@@ -87,14 +87,14 @@ public class Main {
                                     break;
                                 }
 
-                            if(validarMatriz(preencherMatriz(inputFich)) && verificarNumerosFuncionalidade1(preencherMatriz(inputFich))){
-                                funcionalidade1(inputFich, k, 1, outputFile, func);
+                                if(validarMatriz(preencherMatriz(inputFich)) && verificarNumerosFuncionalidade1(preencherMatriz(inputFich))){
+                                    funcionalidade1(inputFich, k, 1, outputFile, func);
+                                }
+                                else{
+                                    System.out.println("Matriz Inválida");
+                                    break;
+                                }
                             }
-                            else{
-                                System.out.println("Matriz Inválida");
-                                break;
-                            }
-                        }
                         } else {
                             System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
                             return;
