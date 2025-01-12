@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLOutput;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -84,10 +85,16 @@ public class Main {
                                 if (k < -1 || k > preencherMatriz(inputFich)[0].length || k == 0){
                                     System.out.println("Número de Eigenfaces inválido");
                                     break;
-                                }else{
-                                    funcionalidade1(inputFich, k, 1, outputFile, func);
                                 }
+
+                            if(validarMatriz(preencherMatriz(inputFich)) && verificarNumerosFuncionalidade1(preencherMatriz(inputFich))){
+                                funcionalidade1(inputFich, k, 1, outputFile, func);
                             }
+                            else{
+                                System.out.println("Matriz Inválida");
+                                break;
+                            }
+                        }
                         } else {
                             System.out.println("Falta de input: Número de Eigenfaces. Flag: -i");
                             return;
@@ -210,7 +217,7 @@ public class Main {
                     System.out.print("Indique o caminho do ficheiro CSV: ");
                     String ficheiroCSV = scanner.nextLine();
 
-                    if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(preencherMatriz(ficheiroCSV)) && verificarNumeros(preencherMatriz(ficheiroCSV))) {
+                    if (validarCaminhoFicheiro(ficheiroCSV) && validarMatriz(preencherMatriz(ficheiroCSV)) && verificarNumerosFuncionalidade1(preencherMatriz(ficheiroCSV))) {
                         System.out.print("Quantos valores/vetores próprios devem ser usados? (Escolha um valor entre 1 e " + preencherMatriz(ficheiroCSV)[0].length + " ou -1 para o valor máximo): ");
                         int k;
                         do {
@@ -328,8 +335,12 @@ public class Main {
 
         if (!verificarTamanho(pasta, numDeFicheiros, ficheiros)) return;
 
+        for(int i= 0; i< numDeFicheiros; i++) {
+            double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[i].getName());
+            if (!verificarNumeros(matriz)) return;
+            if(!isSquareMatrix(matriz)) return;
+        }
         double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[0].getName());
-        if (!verificarNumeros(matriz)) return;
         double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
         for (int j = 0; j < matrizNova[0].length; j++) {
             matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
@@ -421,6 +432,8 @@ public class Main {
         double[][] matrizNova = new double[tamanho][numDeFicheiros];
         for (int j = 0; j < numDeFicheiros; j++) {
             double[][] matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+            if (!verificarNumeros(matriz)) return;
+            if(!isSquareMatrix(matriz)) return;
             double[] matrizVetor = criacaoDeArrayVetor(matriz);
             for (int i = 0; i < matrizVetor.length; i++) {
                 matrizNova[i][j] = matrizVetor[i];
@@ -594,6 +607,8 @@ public class Main {
         double[][] matrizNova = new double[(int) Math.pow(matriz.length, 2)][numDeFicheiros];
         for (int j = 0; j < matrizNova[0].length; j++) {
             matriz = preencherMatriz(pasta + "/" + ficheiros[j].getName());
+            if (!verificarNumeros(matriz)) return;
+            if(!isSquareMatrix(matriz)) return;
             double[] matrizVetor = criacaoDeArrayVetor(matriz);
             for (int i = 0; i < matrizVetor.length; i++) {
                 matrizNova[i][j] = matrizVetor[posicao];
@@ -689,40 +704,46 @@ public class Main {
         return (Math.random() * (max - min)) + min;
     }
 
-    // Preenche a matriz de acordo com os dados encontrados no ficheiro csv, ignorando espaços e virgulas extra
     public static double[][] preencherMatriz(String ficheiroCSV) throws FileNotFoundException {
         File csv = new File(ficheiroCSV);
         Scanner sc = new Scanner(csv);
 
         int numLinhas = 0;
         int numColunas = 0;
-
         while (sc.hasNextLine()) {
-            String linha = sc.nextLine();
-            numLinhas++;
-            String[] valores = linha.split(",");
-            numColunas = valores.length;
+            String linha = sc.nextLine().trim();
+            linha = linha.replaceAll(",+", ",");
+            if (!linha.isEmpty()) {
+                numLinhas++;
+                String[] valores = linha.split(",");
+                numColunas = Math.max(numColunas, valores.length);
+            }
         }
 
         sc.close();
-
         double[][] matriz = new double[numLinhas][numColunas];
         sc = new Scanner(csv);
-        String matrizStr = "";
-        while (sc.hasNextLine()) {
-            String linha = sc.nextLine();
-            matrizStr += linha;
-            matrizStr += "|";
-        }
-        matrizStr = cortarEspacos(matrizStr);
 
-        String[] linhas = matrizStr.split("[|]");
-        for (int i = 0; i < linhas.length; i++) {
-            String[] valores = linhas[i].split(",");
-            for (int j = 0; j < valores.length; j++) {
-                matriz[i][j] = tirarEspacos(valores[j]);
+        int row = 0;
+        while (sc.hasNextLine()) {
+            String linha = sc.nextLine().trim();
+            linha = linha.replaceAll(",+", ",");
+            if (!linha.isEmpty()) {
+                String[] valores = linha.split(",");
+
+                for (int col = 0; col < valores.length; col++) {
+                    try {
+                        String valorCorrigido = valores[col].replace(" ", "");
+                        matriz[row][col] = Double.parseDouble(valorCorrigido.trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Erro ao tentar converter o valor: " + valores[col].trim());
+                        matriz[row][col] = 0;
+                    }
+                }
+                row++;
             }
         }
+
         sc.close();
         return matriz;
     }
@@ -1406,6 +1427,7 @@ public class Main {
     // Verifica se uma dada matriz é quadrada
     public static boolean isSquareMatrix(double[][] matriz) {
         if (matriz.length != matriz[0].length) {
+            System.out.println("A matriz não é quadrada");
             return false;
         }
         return true;
@@ -1478,19 +1500,42 @@ public class Main {
         return true;
     }
 
-    // Verifica se todos os valores de uma matriz pertencem a um certo intervalo de valores e se existe algum valor que não inteiro.
     public static boolean verificarNumeros(double[][] matriz) {
         final int LIMITEMINIMO = 0;
         final int LIMITEMAXIMO = 255;
+
         for (int i = 0; i < matriz.length; i++) {
-            for (int j = 0; j < matriz[0].length; j++) {
-                if (matriz[i][j] < LIMITEMINIMO || matriz[i][j] > LIMITEMAXIMO || !((int) matriz[i][j] == matriz[i][j])) {
-                    System.out.println("O ficheiro csv apresenta erros");
+            for (int j = 0; j < matriz[i].length; j++) {
+                double valor = matriz[i][j];
+                if ((valor % 1) != 0) {
+                    System.out.println("O ficheiro csv apresenta erros: Valores não inteiros encontrados");
+                    return false;
+                }
+                if (valor < LIMITEMINIMO || valor > LIMITEMAXIMO) {
+                    System.out.println("O ficheiro csv apresenta erros: Valores fora do intervalo");
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean verificarNumerosFuncionalidade1(double[][] matriz) {
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[i].length; j++) {
+                double valor = matriz[i][j];
+                if ((valor % 1) != 0) {
+                    System.out.println("O ficheiro csv apresenta erros: Valores não inteiros encontrados");
+                    return false;
                 }
             }
         }
         return true;
     }
+
+
+
 
     // Verifica se a matriz possui valores fora do intervalo [0, 255]
     public static boolean verificarValoresNumIntervalo(double[][] imagemReconstruida) {
